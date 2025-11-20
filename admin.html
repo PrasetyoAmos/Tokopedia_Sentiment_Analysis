@@ -1,0 +1,2503 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel - Tokopedia Sentiment Analysis{% endblock %}
+
+{% block content %}
+<!-- Analysis Progress Modal -->
+<div class="modal fade" id="analysisProgressModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="analysisProgressModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="analysisProgressModalLabel"><i class="fas fa-robot me-2"></i> Sentiment Analysis Progress</h5>
+      </div>
+      <div class="modal-body text-center">
+        <div class="progress mb-3" style="height: 25px;">
+          <div id="analysisProgressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+        </div>
+        <div id="analysisStatusMessage" class="mb-3">
+          <span class="badge bg-info"><i class="fas fa-spinner fa-spin me-2"></i>Initializing...</span>
+        </div>
+        <div id="analysisDetails" class="text-start small">
+          <p><strong>File:</strong> <span id="analysisFileName">-</span></p>
+          <p><strong>Start time:</strong> <span id="analysisStartTime">-</span></p>
+          <p><strong>Estimated time remaining:</strong> <span id="analysisTimeRemaining">Calculating...</span></p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" id="minimizeAnalysisBtn">Minimize</button>
+        <button type="button" class="btn btn-danger" id="cancelAnalysisBtn">Cancel Analysis</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Minimized Analysis Progress Indicator -->
+<div id="minimizedProgress" class="position-fixed bottom-0 end-0 mb-4 me-4 d-none" style="z-index: 1050;">
+  <div class="bg-primary text-white rounded-pill shadow-lg px-4 py-2 d-flex align-items-center" role="button" id="expandAnalysisBtn">
+    <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+    <span><span id="miniProgressValue">0</span>% Processing...</span>
+  </div>
+</div>
+<style>
+/* Custom scrollbar for analysis results only */
+.analysis-files-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.analysis-files-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.analysis-files-container::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+}
+
+.analysis-files-container::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+}
+
+/* Smooth scrolling for analysis results */
+.analysis-files-container {
+    scroll-behavior: smooth;
+}
+
+/* Hover effect for analysis results */
+.analysis-files-container:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transition: box-shadow 0.3s ease;
+}
+
+/* Scroll indicator animation */
+.scroll-indicator {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+/* Futuristic Tab Styles */
+.futuristic-tabs {
+    position: relative;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50px;
+    padding: 8px;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+}
+
+.futuristic-tabs::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.futuristic-tabs .nav-item {
+    margin: 0 !important;
+}
+
+.futuristic-tabs .nav-link {
+    position: relative;
+    background: transparent !important;
+    border: none !important;
+    border-radius: 40px;
+    padding: 12px 24px;
+    color: rgba(255, 255, 255, 0.7) !important;
+    font-weight: 600;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 2;
+    margin: 0 4px;
+    overflow: hidden;
+    min-width: 160px;
+    text-align: center;
+}
+
+.futuristic-tabs .nav-link:hover {
+    color: rgba(255, 255, 255, 0.9) !important;
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.futuristic-tabs .nav-link.active {
+    color: #fff !important;
+    transform: translateY(-1px);
+    font-weight: 700;
+}
+
+/* Animated Background Slider */
+.tab-slider {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    height: calc(100% - 16px);
+    width: 160px;
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 50%, #e83e8c 100%);
+    border-radius: 35px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 20px rgba(255, 193, 7, 0.4);
+    z-index: 1;
+}
+
+/* Glowing effect for active tab */
+.futuristic-tabs .nav-link.active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+    border-radius: inherit;
+    pointer-events: none;
+}
+
+/* Badge animations */
+.futuristic-tabs .badge {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: badgePulse 2s infinite ease-in-out;
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: rgba(255, 255, 255, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-weight: 600;
+    min-width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.futuristic-tabs .nav-link.active .badge {
+    background: rgba(255, 255, 255, 0.25) !important;
+    color: #fff !important;
+    transform: scale(1.1);
+    animation: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes badgePulse {
+    0%, 100% { 
+        transform: scale(1);
+        opacity: 0.8;
+    }
+    50% { 
+        transform: scale(1.05);
+        opacity: 1;
+    }
+}
+
+/* Icon animations */
+.futuristic-tabs .nav-link i {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 1.1em;
+}
+
+.futuristic-tabs .nav-link.active i {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+}
+
+/* Hover ripple effect - REMOVED oval white shadow */
+.futuristic-tabs .nav-link::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+    border-radius: inherit;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+}
+
+.futuristic-tabs .nav-link:hover::after {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Text glow effect */
+.futuristic-tabs .nav-link.active span {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+}
+
+/* Glow effect for tab switching */
+.tab-glow-effect {
+    animation: tabGlow 0.8s ease-out !important;
+}
+
+@keyframes tabGlow {
+    0% {
+        box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.6), 0 0 30px rgba(255, 255, 255, 0.4);
+        transform: translateY(-2px) scale(1.02);
+    }
+    100% {
+        box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+        transform: translateY(-1px) scale(1);
+    }
+}
+
+/* Tab content fade transitions */
+.tab-pane {
+    transition: opacity 0.3s ease-in-out;
+}
+
+.tab-pane:not(.active) {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.tab-pane.active {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .futuristic-tabs {
+        border-radius: 25px;
+        padding: 6px;
+    }
+    
+    .futuristic-tabs .nav-link {
+        padding: 10px 16px;
+        min-width: 140px;
+        font-size: 0.9em;
+    }
+    
+    .tab-slider {
+        width: 140px;
+    }
+}
+</style>
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-cog me-2"></i>
+        Admin Panel
+    </h1>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-spider me-2"></i>
+                    Scraping Tokopedia
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="scrapingForm">
+                    <div class="mb-3">
+                        <label for="url" class="form-label">URL Toko Tokopedia</label>
+                        <input type="url" class="form-control" id="url" name="url" required
+                               placeholder="https://www.tokopedia.com/nama-toko/review">
+                        <div class="form-text">Masukkan URL halaman toko Tokopedia yang ingin di-scraping</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="pages" class="form-label">Jumlah Halaman</label>
+                        <input type="number" class="form-control" id="pages" name="pages" min="1" value="2">
+                        <div class="form-text">Maksimal 100 halaman untuk menghindari rate limiting</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="filename" class="form-label">Nama File</label>
+                        <input type="text" class="form-control" id="filename" name="filename" 
+                               placeholder="Contoh: ulasan_sepatu, review_toko_abc, analisis_produk">
+                        <div class="form-text">File akan disimpan dalam format: NAMA_TGL_JAM.csv (kosongkan untuk default "tokopedia")</div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg" id="startScrapingBtn">
+                        <i class="fas fa-play me-2"></i>
+                        Mulai Scraping
+                    </button>
+                    <button type="button" class="btn btn-secondary ms-2" onclick="testConnection()" title="Test koneksi server dan status sistem">
+                        <i class="fas fa-wifi me-2"></i>
+                        Test Connection
+                    </button>
+                </form>
+                <!-- Status Display -->
+                <div id="statusDisplay" class="mt-4" style="display: none;">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle me-2"></i>Status:</h6>
+                        <div id="statusContent">Ready to scrape...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Informasi & Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <h6>System Status:</h6>
+                <div id="systemStatus">
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-success me-2">Ready</span>
+                        <small>Web Application</small>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-warning me-2" id="chromeStatus">Unknown</span>
+                        <small>ChromeDriver</small>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <span class="badge bg-info me-2" id="sentimentStatus">Checking...</span>
+                        <small>Enhanced Sentiment Analyzer</small>
+                    </div>
+                </div>
+                <hr>
+                <h6>Fitur Enhanced Sentiment Analysis:</h6>
+                <ul class="small">
+                    <li><i class="fas fa-laugh me-1 text-warning"></i>Emoji Detection (😊😢😐 → sentiment)</li>
+                    <li><i class="fas fa-exchange-alt me-1 text-info"></i>Double Negation ("gk pernah gagal" → positif)</li>
+                    <li><i class="fas fa-language me-1 text-success"></i>Slang Normalization (2000+ kata)</li>
+                    <li><i class="fas fa-brain me-1 text-primary"></i>Hybrid ML + Lexicon Analysis</li>
+                    <li><i class="fas fa-search me-1 text-secondary"></i>Context-Aware Pattern Recognition</li>
+                </ul>
+                <hr>
+                <h6>Panduan Scraping:</h6>
+                <ul class="small">
+                    <li>Pastikan URL toko valid dan dapat diakses</li>
+                    <li>Scraping akan mengambil ulasan, nama produk, dan rating</li>
+                    <li>Proses dapat memakan waktu 2-5 menit</li>
+                    <li>Hasil akan disimpan dalam format CSV</li>
+                    <li>Ada jeda waktu otomatis (delay) pada proses scraping untuk menghindari deteksi bot oleh Tokopedia</li>
+                </ul>
+                <hr>
+                <div class="text-center">
+                    <small class="text-muted">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        Scraping dilakukan secara etis dengan delay
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-line me-2"></i>
+                            Hasil Analisis Sentimen
+                        </h5>
+                        <small class="d-block mt-1 opacity-75">
+                            <i class="fas fa-info-circle me-1"></i>
+                            File JSON berisi hasil analisis sentimen dari dataset CSV yang telah diproses
+                        </small>
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-light text-dark">
+                            <i class="fas fa-file-code me-1"></i>
+                            Format: JSON
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Analysis Results Section -->
+                <div class="alert alert-light d-flex align-items-center mb-3 border-start border-4 border-success">
+                  <i class="fas fa-lightbulb text-success me-2"></i>
+                  <div>
+                    <strong>Info Workflow:</strong> 
+                    <small>Dataset CSV → Analisis Sentimen → File JSON (Draft) → Review Admin → Published (Dapat dilihat stakeholder)</small>
+                  </div>
+                </div>
+
+                <!-- Summary Stats -->
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <div class="card border-warning text-center">
+                      <div class="card-body py-2">
+                        <h6 class="card-title mb-1">
+                          <i class="fas fa-clock text-warning me-1"></i>
+                          Menunggu Review
+                        </h6>
+                        <span class="badge bg-warning text-dark fs-6">
+                          {{ analysis_files|selectattr('status', 'ne', 'published')|list|length }} file
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="card border-success text-center">
+                      <div class="card-body py-2">
+                        <h6 class="card-title mb-1">
+                          <i class="fas fa-check-circle text-success me-1"></i>
+                          Sudah Dipublish
+                        </h6>
+                        <span class="badge bg-success fs-6">
+                          {{ analysis_files|selectattr('status', 'eq', 'published')|list|length }} file
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Status Tabs -->
+                <div class="futuristic-tabs d-flex justify-content-center mb-4" id="analysisStatusTab" role="tablist">
+                  <!-- Animated Background Slider -->
+                  <div class="tab-slider" id="tabSlider"></div>
+                  
+                  <button class="nav-link active d-flex align-items-center gap-2" id="draft-tab" data-bs-toggle="tab" data-bs-target="#draftFiles" type="button" role="tab" aria-controls="draftFiles" aria-selected="true">
+                    <i class="fas fa-edit"></i> 
+                    <span>Perlu Review</span>
+                    <span class="badge ms-1" id="draftBadge">{{ analysis_files|selectattr('status', 'ne', 'published')|list|length }}</span>
+                  </button>
+                  
+                  <button class="nav-link d-flex align-items-center gap-2" id="published-tab" data-bs-toggle="tab" data-bs-target="#publishedFiles" type="button" role="tab" aria-controls="publishedFiles" aria-selected="false">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Sudah Dipublish</span>
+                    <span class="badge ms-1" id="publishedBadge">{{ analysis_files|selectattr('status', 'eq', 'published')|list|length }}</span>
+                  </button>
+                </div>
+
+                <div class="tab-content" id="analysisStatusTabContent">
+                  <!-- Draft Files Tab -->
+                  <div class="tab-pane fade show active" id="draftFiles" role="tabpanel" aria-labelledby="draft-tab">
+                    <div class="alert alert-warning d-flex align-items-center mb-3">
+                      <i class="fas fa-exclamation-triangle me-2"></i>
+                      <div>
+                        <strong>Menunggu Review Admin</strong><br>
+                        <small>File-file ini belum dipublish dan masih memerlukan review dari admin sebelum dapat dilihat stakeholder.</small>
+                      </div>
+                    </div>
+                    
+                    <!-- Scrollable container for draft files -->
+                    <div class="analysis-files-container draft-container" style="max-height: 350px; overflow-y: auto; border: 1px solid #ffc107; border-radius: 0.375rem; background-color: #fff8e1;" id="draftFilesContainer">
+                      <div class="list-group list-group-flush mb-0">
+                        {% for a in analysis_files %}
+                        {% if a.status != 'published' %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                          <div class="d-flex align-items-center">
+                            <i class="fas fa-file-code text-warning me-3" style="font-size: 1.2em;"></i>
+                            <div>
+                              <span class="fw-bold">{{ a.json }}</span>
+                              <br>
+                              <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>{{ a.info.mtime_formatted }}
+                                <span class="ms-2">
+                                  <i class="fas fa-weight me-1"></i>{{ a.info.size_formatted }}
+                                </span>
+                              </small>
+                            </div>
+                          </div>
+                          <div class="d-flex align-items-center">
+                            <span class="badge bg-warning text-dark me-3">Perlu Review</span>
+                            <div class="btn-group">
+                              <a href="/review/{{ a.json }}" class="btn btn-warning btn-sm">
+                                <i class="fas fa-user-shield me-1"></i> Review & Publish
+                              </a>
+                              <button class="btn btn-outline-danger btn-sm" onclick="showDeleteModal('json', '{{ a.json }}')" title="Hapus file analisis - akan menghapus hasil analisis secara permanen">
+                                <i class="fas fa-trash-alt"></i>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                        {% if not analysis_files or analysis_files|selectattr('status', 'ne', 'published')|list|length == 0 %}
+                        <div class="text-center text-muted py-5">
+                          <div class="mb-3">
+                            <i class="fas fa-clipboard-check" style="font-size: 3em; opacity: 0.4;"></i>
+                          </div>
+                          <h6 class="text-muted mb-2">Semua File Sudah Direview! 🎉</h6>
+                          <p class="mb-3">
+                            Tidak ada file yang perlu direview saat ini.<br>
+                            <small>Semua hasil analisis sudah dipublish atau belum ada file analisis.</small>
+                          </p>
+                          <div class="mt-3">
+                            <small class="text-muted">
+                              <i class="fas fa-info-circle me-1"></i>
+                              Tip: Lakukan analisis sentimen pada dataset CSV untuk membuat file baru
+                            </small>
+                          </div>
+                        </div>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Published Files Tab -->
+                  <div class="tab-pane fade" id="publishedFiles" role="tabpanel" aria-labelledby="published-tab">
+                    <div class="alert alert-success d-flex align-items-center mb-3">
+                      <i class="fas fa-check-circle me-2"></i>
+                      <div>
+                        <strong>Sudah Dipublish</strong><br>
+                        <small>File-file ini sudah final dan dapat dilihat oleh stakeholder melalui dashboard utama.</small>
+                      </div>
+                    </div>
+                    
+                    <!-- Scrollable container for published files -->
+                    <div class="analysis-files-container published-container" style="max-height: 350px; overflow-y: auto; border: 1px solid #28a745; border-radius: 0.375rem; background-color: #f8fff9;" id="publishedFilesContainer">
+                      <div class="list-group list-group-flush mb-0">
+                        {% for a in analysis_files %}
+                        {% if a.status == 'published' %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                          <div class="d-flex align-items-center">
+                            <i class="fas fa-file-check text-success me-3" style="font-size: 1.2em;"></i>
+                            <div>
+                              <span class="fw-bold">{{ a.json }}</span>
+                              <br>
+                              <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>{{ a.info.mtime_formatted }}
+                                <span class="ms-2">
+                                  <i class="fas fa-weight me-1"></i>{{ a.info.size_formatted }}
+                                </span>
+                                <span class="ms-2">
+                                  <i class="fas fa-eye me-1"></i>Dapat dilihat stakeholder
+                                </span>
+                              </small>
+                            </div>
+                          </div>
+                          <div class="d-flex align-items-center">
+                            <span class="badge bg-success me-3">Published</span>
+                            <a href="/review/{{ a.json }}" class="btn btn-success btn-sm">
+                              <i class="fas fa-eye me-1"></i> Lihat Hasil
+                            </a>
+                          </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                        {% if not analysis_files or analysis_files|selectattr('status', 'eq', 'published')|list|length == 0 %}
+                        <div class="text-center text-muted py-5">
+                          <div class="mb-3">
+                            <i class="fas fa-rocket" style="font-size: 3em; opacity: 0.4;"></i>
+                          </div>
+                          <h6 class="text-muted mb-2">Siap untuk Publikasi Pertama! 🚀</h6>
+                          <p class="mb-3">
+                            Belum ada file yang dipublish.<br>
+                            <small>Setelah review selesai, file akan muncul di sini dan dapat dilihat stakeholder.</small>
+                          </p>
+                          <div class="mt-3">
+                            <small class="text-muted">
+                              <i class="fas fa-lightbulb me-1"></i>
+                              Tip: Review file draft dan publish untuk membuat file tersedia untuk stakeholder
+                            </small>
+                          </div>
+                        </div>
+                        {% endif %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Separator Line -->
+                <hr class="my-4">
+
+                <!-- Modern Dataset Section with Scrollable Interface -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h6 class="mb-1 fw-bold">
+                                <i class="fas fa-database text-primary me-2"></i>
+                                Dataset Tersedia
+                            </h6>
+                            <small class="text-muted">
+                                <i class="fas fa-chart-bar me-1"></i>
+                                {{ csv_files_info|length }} dataset • 
+                                <span class="text-success">{{ (csv_files_info|length) - (csv_files_unanalyzed|length) }} dianalisis</span> • 
+                                <span class="text-warning">{{ csv_files_unanalyzed|length }} belum dianalisis</span>
+                            </small>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="showAnalyzedDatasets" onchange="toggleAnalyzedDatasets()">
+                                <label class="form-check-label" for="showAnalyzedDatasets">
+                                    <small>Tampilkan yang sudah dianalisis</small>
+                                </label>
+                            </div>
+                            <button class="btn btn-sm btn-outline-primary" onclick="manualRefreshDatasets()" title="Refresh Dataset List">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modern Scrollable Dataset Container -->
+                <div class="modern-dataset-container" id="csvFilesContainer">
+                    <div class="dataset-scroll-wrapper">
+                        {% for file_info in csv_files_info %}
+                        <div class="dataset-card animate__animated animate__fadeInUp {% if file_info.filename not in csv_files_unanalyzed %}analyzed-dataset{% endif %}" data-filename="{{ file_info.filename }}">
+                            <!-- Status Indicator -->
+                            <div class="status-indicator">
+                                {% if file_info.filename in csv_files_unanalyzed %}
+                                <div class="status-badge status-pending">
+                                    <i class="fas fa-clock"></i>
+                                    <span>Belum Dianalisis</span>
+                                </div>
+                                {% else %}
+                                <div class="status-badge status-completed">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Sudah Dianalisis</span>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Dataset Header -->
+                            <div class="dataset-header">
+                                <div class="file-icon">
+                                    <i class="fas fa-file-csv"></i>
+                                </div>
+                                <div class="file-info">
+                                    <h6 class="filename">{{ file_info.filename }}</h6>
+                                    <div class="file-meta">
+                                        <span class="meta-item">
+                                            <i class="fas fa-calendar-alt"></i>
+                                            {{ file_info.formatted_time }}
+                                        </span>
+                                        <span class="meta-item">
+                                            <i class="fas fa-weight-hanging"></i>
+                                            {{ file_info.size }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dataset Details -->
+                            <div class="dataset-details">
+                                {% if file_info.csv_valid %}
+                                <div class="detail-row">
+                                    <span class="detail-label">
+                                        <i class="fas fa-table"></i>
+                                        Data:
+                                    </span>
+                                    <span class="detail-value">{{ file_info.csv_details }}</span>
+                                </div>
+                                {% if file_info.columns %}
+                                <div class="detail-row">
+                                    <span class="detail-label">
+                                        <i class="fas fa-columns"></i>
+                                        Kolom:
+                                    </span>
+                                    <div class="columns-preview">
+                                        {% for col in file_info.columns[:3] %}
+                                        <span class="column-tag">{{ col }}</span>
+                                        {% endfor %}
+                                        {% if file_info.columns|length > 3 %}
+                                        <span class="column-more">+{{ file_info.columns|length - 3 }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {% else %}
+                                <div class="detail-row">
+                                    <span class="detail-value text-danger">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        {{ file_info.csv_details }}
+                                    </span>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="dataset-actions">
+                                {% if file_info.filename in csv_files_unanalyzed %}
+                                <button class="action-btn action-primary action-analysis" onclick="startAnalysis('{{ file_info.filename }}')" title="Analisis Sentimen">
+                                    <i class="fas fa-chart-line me-1"></i>
+                                    <span>Analisis</span>
+                                </button>
+                                {% endif %}
+                                
+                                <button class="action-btn action-info" onclick="window.open('/preview_csv/{{ file_info.filename }}', '_blank')" title="Preview Dataset">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                
+                                <button class="action-btn action-secondary" onclick="window.location.href='/download/{{ file_info.filename }}'" title="Download CSV">
+                                    <i class="fas fa-download"></i>
+                                </button>
+                                
+                                <button class="action-btn action-danger" onclick="showDeleteModal('csv', '{{ file_info.filename }}')" title="Hapus Dataset">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        {% if not csv_files_info %}
+                        <div class="empty-dataset-state">
+                            <div class="empty-icon">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <h6>Belum Ada Dataset</h6>
+                            <p>Lakukan scraping atau upload file CSV untuk memulai analisis sentimen</p>
+                            <button class="btn btn-primary btn-sm" onclick="document.querySelector('#scrapingTab').click()">
+                                <i class="fas fa-plus me-1"></i>
+                                Mulai Scraping
+                            </button>
+                        </div>
+                        {% elif csv_files_unanalyzed|length == 0 %}
+                        <div class="empty-dataset-state">
+                            <div class="empty-icon">
+                                <i class="fas fa-check-circle text-success"></i>
+                            </div>
+                            <h6>Semua Dataset Telah Dianalisis</h6>
+                            <p>Semua dataset CSV telah berhasil dianalisis. Aktifkan toggle di atas untuk melihat dataset yang sudah dianalisis.</p>
+                            <button class="btn btn-success btn-sm" onclick="document.getElementById('showAnalyzedDatasets').click()">
+                                <i class="fas fa-eye me-1"></i>
+                                Tampilkan Yang Sudah Dianalisis
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Scroll Indicator -->
+                    {% if csv_files_info|length > 3 %}
+                    <div class="scroll-indicator">
+                        <i class="fas fa-chevron-down"></i>
+                        <span>Scroll untuk melihat lebih banyak</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Add Modern Styles -->
+                <style>
+                .modern-dataset-container {
+                    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                    border-radius: 15px;
+                    padding: 20px;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    backdrop-filter: blur(10px);
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .dataset-scroll-wrapper {
+                    max-height: 500px;
+                    overflow-y: auto;
+                    padding-right: 10px;
+                    scrollbar-width: thin;
+                    scrollbar-color: #667eea #f1f1f1;
+                }
+
+                .dataset-scroll-wrapper::-webkit-scrollbar {
+                    width: 8px;
+                }
+
+                .dataset-scroll-wrapper::-webkit-scrollbar-track {
+                    background: rgba(241, 241, 241, 0.5);
+                    border-radius: 10px;
+                }
+
+                .dataset-scroll-wrapper::-webkit-scrollbar-thumb {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    border-radius: 10px;
+                    transition: all 0.3s ease;
+                }
+
+                .dataset-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+                    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+                }
+
+                .dataset-card {
+                    background: white;
+                    border-radius: 12px;
+                    padding: 20px;
+                    margin-bottom: 15px;
+                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+                    border: 1px solid rgba(102, 126, 234, 0.1);
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    position: relative;
+                    overflow: hidden;
+                }
+
+                .dataset-card:hover {
+                    transform: translateY(-5px) scale(1.02);
+                    box-shadow: 0 12px 40px rgba(102, 126, 234, 0.15);
+                    border-color: rgba(102, 126, 234, 0.3);
+                }
+
+                .dataset-card::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: -100%;
+                    width: 100%;
+                    height: 100%;
+                    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+                    transition: left 0.6s;
+                }
+
+                .dataset-card:hover::before {
+                    left: 100%;
+                }
+
+                .status-indicator {
+                    position: absolute;
+                    top: 15px;
+                    right: 15px;
+                    z-index: 2;
+                }
+
+                .status-badge {
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                    padding: 6px 12px;
+                    border-radius: 20px;
+                    font-size: 0.75rem;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                }
+
+                .status-pending {
+                    background: linear-gradient(135deg, #ffc107 0%, #ffeb3b 100%);
+                    color: #856404;
+                }
+
+                .status-completed {
+                    background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+                    color: white;
+                }
+
+                .dataset-header {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 15px;
+                    margin-bottom: 15px;
+                    padding-right: 120px;
+                }
+
+                .file-icon {
+                    width: 50px;
+                    height: 50px;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    border-radius: 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    font-size: 1.5rem;
+                    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+                    flex-shrink: 0;
+                }
+
+                .filename {
+                    font-size: 1rem;
+                    font-weight: 700;
+                    color: #2d3748;
+                    margin-bottom: 5px;
+                    word-break: break-word;
+                }
+
+                .file-meta {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 15px;
+                    font-size: 0.8rem;
+                    color: #718096;
+                }
+
+                .meta-item {
+                    display: flex;
+                    align-items: center;
+                    gap: 5px;
+                }
+
+                .meta-item i {
+                    color: #667eea;
+                }
+
+                .dataset-details {
+                    margin-bottom: 20px;
+                    padding: 15px;
+                    background: rgba(102, 126, 234, 0.05);
+                    border-radius: 8px;
+                    border-left: 4px solid #667eea;
+                }
+
+                .detail-row {
+                    display: flex;
+                    align-items: flex-start;
+                    gap: 10px;
+                    margin-bottom: 8px;
+                }
+
+                .detail-row:last-child {
+                    margin-bottom: 0;
+                }
+
+                .detail-label {
+                    display: flex;
+                    align-items: center;
+                    gap: 5px;
+                    font-weight: 600;
+                    color: #4a5568;
+                    font-size: 0.85rem;
+                    white-space: nowrap;
+                    min-width: 70px;
+                }
+
+                .detail-value {
+                    color: #2d3748;
+                    font-size: 0.85rem;
+                }
+
+                .columns-preview {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 5px;
+                    align-items: center;
+                }
+
+                .column-tag {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 2px 8px;
+                    border-radius: 12px;
+                    font-size: 0.7rem;
+                    font-weight: 500;
+                }
+
+                .column-more {
+                    background: #e2e8f0;
+                    color: #4a5568;
+                    padding: 2px 8px;
+                    border-radius: 12px;
+                    font-size: 0.7rem;
+                    font-weight: 500;
+                }
+
+                .dataset-actions {
+                    display: flex;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                    justify-content: flex-end;
+                }
+
+                .action-btn {
+                    width: 40px;
+                    height: 40px;
+                    border: none;
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 1rem;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+                    position: relative;
+                    overflow: hidden;
+                    white-space: nowrap;
+                }
+
+                /* Special styling for analysis button with text */
+                .action-analysis {
+                    width: auto !important;
+                    min-width: 90px;
+                    padding: 0 12px;
+                    font-size: 0.9rem;
+                    font-weight: 600;
+                }
+
+                .action-analysis i {
+                    font-size: 0.9rem;
+                }
+
+                .action-analysis span {
+                    margin-left: 2px;
+                }
+
+                .action-btn:hover:not(:disabled) {
+                    transform: translateY(-2px) scale(1.1);
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+                }
+
+                .action-btn:disabled {
+                    opacity: 0.6;
+                    cursor: not-allowed;
+                }
+
+                .action-primary {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                }
+
+                .action-success {
+                    background: linear-gradient(135deg, #28a745 0%, #34ce57 100%);
+                    color: white;
+                }
+
+                .action-info {
+                    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+                    color: white;
+                }
+
+                .action-secondary {
+                    background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+                    color: white;
+                }
+
+                .action-danger {
+                    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+                    color: white;
+                }
+
+                .empty-dataset-state {
+                    text-align: center;
+                    padding: 60px 20px;
+                    color: #718096;
+                }
+
+                .empty-icon {
+                    font-size: 4rem;
+                    opacity: 0.3;
+                    margin-bottom: 20px;
+                }
+
+                .empty-dataset-state h6 {
+                    color: #4a5568;
+                    margin-bottom: 10px;
+                }
+
+                .scroll-indicator {
+                    position: absolute;
+                    bottom: 10px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 5px;
+                    color: #667eea;
+                    font-size: 0.75rem;
+                    opacity: 0.7;
+                    animation: float 2s ease-in-out infinite;
+                }
+
+                @keyframes float {
+                    0%, 100% { transform: translateX(-50%) translateY(0px); }
+                    50% { transform: translateX(-50%) translateY(-5px); }
+                }
+
+                /* Animation classes */
+                .animate__animated {
+                    animation-duration: 0.5s;
+                    animation-fill-mode: both;
+                }
+
+                .animate__fadeInUp {
+                    animation-name: fadeInUp;
+                }
+
+                @keyframes fadeInUp {
+                    from {
+                        opacity: 0;
+                        transform: translate3d(0, 40px, 0);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translate3d(0, 0, 0);
+                    }
+                }
+
+                /* Hide analyzed datasets by default */
+                .analyzed-dataset {
+                    display: none;
+                }
+
+                /* Show analyzed datasets when toggle is enabled */
+                .show-analyzed .analyzed-dataset {
+                    display: block;
+                }
+
+                /* Form switch styling */
+                .form-check-input:checked {
+                    background-color: #667eea;
+                    border-color: #667eea;
+                }
+
+                /* Responsive adjustments */
+                @media (max-width: 768px) {
+                    .dataset-header {
+                        padding-right: 80px;
+                    }
+                    
+                    .file-meta {
+                        flex-direction: column;
+                        gap: 5px;
+                    }
+                    
+                    .dataset-actions {
+                        justify-content: center;
+                    }
+                    
+                    .action-btn {
+                        width: 35px;
+                        height: 35px;
+                        font-size: 0.9rem;
+                    }
+                    
+                    .action-analysis {
+                        min-width: 75px;
+                        padding: 0 6px;
+                        font-size: 0.75rem;
+                    }
+                    
+                    .action-analysis span {
+                        display: none;
+                    }
+                    
+                    .action-analysis i {
+                        margin: 0;
+                    }
+                }
+                </style>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Modal (Bootstrap 5 native) -->
+<div class="modal fade" id="scrapingModal" tabindex="-1" aria-labelledby="scrapingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="scrapingModalLabel">
+                    <i class="fas fa-spider fa-spin me-2"></i>
+                    Scraping dalam Progress
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="progress mb-3" style="height: 25px;">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" 
+                         id="scrapingProgress" 
+                         role="progressbar" 
+                         style="width: 0%" 
+                         aria-valuenow="0" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100">0%</div>
+                </div>
+                
+                <div id="scrapingStatus" class="mb-3">
+                    <i class="fas fa-hourglass-start me-2"></i>
+                    Memulai scraping...
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Harap tunggu:</strong> Proses scraping sedang berjalan. Jangan tutup halaman ini.
+                </div>
+                
+                <!-- Progress Log -->
+                <div class="mt-3">
+                    <h6>Progress Log:</h6>
+                    <div id="scrapingLogs" style="max-height: 150px; overflow-y: auto; background-color: #f8f9fa; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 0.8em;">
+                        <div>Waiting for scraping to start...</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <small class="text-muted me-auto">
+                    <i class="fas fa-clock me-1"></i>
+                    Estimated time: 2-5 minutes
+                </small>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="cancelScraping()">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Progress Analisis Dataset -->
+<div class="modal fade" id="analysisModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-cog fa-spin me-2"></i>
+                    Memproses Analisis Sentimen
+                </h5>
+            </div>
+            <div class="modal-body">
+                <div class="progress progress-custom mb-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" id="analysisProgress" style="width: 0%"></div>
+                </div>
+                <p id="analysisStatus">Memulai analisis...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Rename CSV -->
+<div class="modal fade" id="renameCsvModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="renameCsvForm" onsubmit="submitRenameCsv(event)">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Rename Dataset CSV</h5>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="oldCsvFileName" name="oldCsvFileName">
+          <div class="mb-3">
+            <label for="newCsvFileName" class="form-label">Nama File Baru (tanpa .csv)</label>
+            <input type="text" class="form-control" id="newCsvFileName" name="newCsvFileName" required>
+          </div>
+          <div id="renameCsvStatus" class="text-danger small"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-warning">Rename</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Delete File -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="deleteForm" onsubmit="submitDelete(event)">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-trash me-2"></i>Konfirmasi Hapus File</h5>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="deleteFileType" name="deleteFileType">
+          <input type="hidden" id="deleteFileName" name="deleteFileName">
+          <p>Apakah Anda yakin ingin menghapus file <strong id="deleteFileNameLabel"></strong>?</p>
+          <div id="deleteStatus" class="text-danger small"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-danger">Hapus</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div class="row" id="wordcloudSection" style="display:none;">
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-header bg-info text-white"><i class="fas fa-cloud me-2"></i>Wordcloud Positif</div>
+      <div class="card-body text-center">
+        <img id="wordcloudPositiveImg" src="" alt="Wordcloud Positif" class="img-fluid" style="max-height:220px;">
+      </div>
+    </div>
+    <div class="card mb-3">
+      <div class="card-header bg-success text-white"><i class="fas fa-list me-2"></i>Kata Paling Sering (Positif)</div>
+      <div class="card-body">
+        <ul id="commonWordsPositive" class="list-group small"></ul>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card mb-3">
+      <div class="card-header bg-danger text-white"><i class="fas fa-cloud me-2"></i>Wordcloud Negatif</div>
+      <div class="card-body text-center">
+        <img id="wordcloudNegativeImg" src="" alt="Wordcloud Negatif" class="img-fluid" style="max-height:220px;">
+      </div>
+    </div>
+    <div class="card mb-3">
+      <div class="card-header bg-danger text-white"><i class="fas fa-list me-2"></i>Kata Paling Sering (Negatif)</div>
+      <div class="card-body">
+        <ul id="commonWordsNegative" class="list-group small"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+// Global variables
+let scrapingModal;
+let isScrapingActive = false;
+let statusCheckInterval;
+let selectedAnalysisFile = '';
+let renameCsvModal;
+let deleteModal;
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Admin panel loaded');
+    
+    // Initialize Bootstrap modal
+    scrapingModal = new bootstrap.Modal(document.getElementById('scrapingModal'), {
+        keyboard: false,
+        backdrop: 'static'
+    });
+    
+    // Set up analysis progress indicator buttons
+    const minimizeBtn = document.getElementById('minimizeAnalysisBtn');
+    const expandBtn = document.getElementById('expandAnalysisBtn');
+    const cancelBtn = document.getElementById('cancelAnalysisBtn');
+    
+    if (minimizeBtn) {
+        minimizeBtn.addEventListener('click', function() {
+            document.getElementById('minimizedProgress').classList.remove('d-none');
+            const analysisModal = bootstrap.Modal.getInstance(document.getElementById('analysisProgressModal'));
+            if (analysisModal) analysisModal.hide();
+        });
+    }
+    
+    if (expandBtn) {
+        expandBtn.addEventListener('click', function() {
+            document.getElementById('minimizedProgress').classList.add('d-none');
+            const analysisModal = new bootstrap.Modal(document.getElementById('analysisProgressModal'));
+            analysisModal.show();
+        });
+    }
+    
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to cancel the analysis? The process will continue in the background.')) {
+                const analysisModal = bootstrap.Modal.getInstance(document.getElementById('analysisProgressModal'));
+                if (analysisModal) analysisModal.hide();
+                document.getElementById('minimizedProgress').classList.add('d-none');
+                showAlert('Analysis continues in the background', 'info');
+            }
+        });
+    }
+    
+    // Check system status
+    checkSystemStatus();
+    
+    renameCsvModal = new bootstrap.Modal(document.getElementById('renameCsvModal'));
+    deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    
+    // Initialize futuristic tabs
+    initializeFuturisticTabs();
+    
+    console.log('All initialized successfully');
+});
+
+// Form submission handler (NO JQUERY!)
+const scrapingForm = document.getElementById('scrapingForm');
+if (scrapingForm) {
+    scrapingForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    console.log('Form submitted - starting scraping process');
+    
+    // Get form values
+    const url = document.getElementById('url').value.trim();
+    const pages = parseInt(document.getElementById('pages').value);
+    const filename = document.getElementById('filename').value.trim();
+    
+    // Validate inputs
+    if (!url) {
+        showAlert('URL tidak boleh kosong!', 'danger');
+        return;
+    }
+    
+    if (!url.includes('tokopedia.com')) {
+        showAlert('URL harus berupa link Tokopedia!', 'danger');
+        return;
+    }
+    
+    // Filename validation removed - empty filename is now allowed for default naming
+    
+    if (pages < 1) {
+        showAlert('Jumlah halaman minimal 1!', 'danger');
+        return;
+    }
+    
+    // Start scraping process
+    startScraping(url, pages, filename);
+});
+
+function startScraping(url, pages, filename) {
+    console.log(`Starting scraping: ${url}, ${pages} pages, filename: ${filename}`);
+    
+    // Disable form
+    toggleForm(false);
+    
+    // Show modal
+    scrapingModal.show();
+    
+    // Reset progress
+    updateProgress(0, 'Memulai scraping...');
+    addLogEntry(`Starting scraping for ${url}`);
+    addLogEntry(`Pages to scrape: ${pages}`);
+    addLogEntry(`Output filename: ${filename}.csv`);
+    
+    // Prepare form data
+    const formData = new FormData();
+    formData.append('url', url);
+    formData.append('pages', pages);
+    formData.append('filename', filename);
+    
+    // Make request to start scraping
+    fetch('/scrape', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        console.log('Scrape response status:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status} ${response.statusText}`);
+        }
+        
+        return response.json();
+    })
+    .then(data => {
+        console.log('Scrape response data:', data);
+        
+        if (data.status === 'started') {
+            addLogEntry('✅ Scraping started successfully!');
+            isScrapingActive = true;
+            
+            // Start checking status
+            checkScrapingStatus();
+        } else {
+            throw new Error(`Unexpected response: ${JSON.stringify(data)}`);
+        }
+    })
+    .catch(error => {
+        console.error('Scraping start error:', error);
+        addLogEntry(`❌ Error starting scraping: ${error.message}`);
+        
+        // Show error in status
+        updateProgress(0, `Error: ${error.message}`);
+        
+        // Re-enable form
+        toggleForm(true);
+        
+        // Show error alert
+        showAlert(`Gagal memulai scraping: ${error.message}`, 'danger');
+    });
+}
+}
+
+function checkScrapingStatus() {
+    if (!isScrapingActive) {
+        return;
+    }
+    
+    console.log('Checking scraping status...');
+    
+    fetch('/scraping_status')
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Status check failed: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Status data:', data);
+        
+        const progress = data.progress || 0;
+        const status = data.status || 'unknown';
+        const message = data.message || 'Processing...';
+        
+        // Update progress display
+        updateProgress(progress, message);
+        addLogEntry(`Status: ${status} | Progress: ${progress}% | ${message}`);
+        
+        if (status === 'running') {
+            // Continue checking after 2 seconds
+            setTimeout(checkScrapingStatus, 2000);
+        } else if (status === 'completed') {
+            // Scraping completed successfully
+            addLogEntry('🎉 Scraping completed successfully!');
+            updateProgress(100, '✅ Scraping selesai! Data telah disimpan.');
+            
+            // Refresh dataset list first
+            addLogEntry('🔄 Refreshing dataset list...');
+            
+            // Use direct fetch instead of separate function to avoid dependency
+            addLogEntry('Fetching updated dataset list...');
+            
+            // Direct fetch to refresh datasets
+            fetch('/refresh_datasets')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        addLogEntry('✅ Dataset list refreshed successfully!');
+                        
+                        // Then redirect after a delay to show the updated list
+                        setTimeout(() => {
+                            addLogEntry('Redirecting to admin panel...');
+                            window.location.href = '/admin';
+                        }, 3000); // Increased delay to see the updates
+                    } else {
+                        throw new Error('Dataset refresh returned error');
+                    }
+                })
+                .catch(error => {
+                    addLogEntry(`⚠️ Dataset refresh error: ${error.message}`);
+                    
+                    // Still redirect even if refresh fails
+                    setTimeout(() => {
+                        addLogEntry('Redirecting to admin panel...');
+                        window.location.href = '/admin';
+                    }, 2000);
+                });
+            
+            isScrapingActive = false;
+        } else if (status === 'error') {
+            // Scraping failed
+            addLogEntry(`❌ Scraping failed: ${message}`);
+            updateProgress(0, `❌ Error: ${message}`);
+            // Re-enable form
+            toggleForm(true);
+            isScrapingActive = false;
+        } else {
+            // Unknown status
+            addLogEntry(`⚠️ Unknown status: ${status}`);
+            setTimeout(checkScrapingStatus, 3000);
+        }
+    })
+    .catch(error => {
+        console.error('Status check error:', error);
+        addLogEntry(`⚠️ Status check error: ${error.message}`);
+        // Retry after longer delay
+        if (isScrapingActive) {
+            setTimeout(checkScrapingStatus, 5000);
+        }
+    });
+}
+
+function updateProgress(percent, message) {
+    const progressBar = document.getElementById('scrapingProgress');
+    const statusDiv = document.getElementById('scrapingStatus');
+    
+    if (progressBar) {
+        progressBar.style.width = percent + '%';
+        progressBar.textContent = percent + '%';
+        progressBar.setAttribute('aria-valuenow', percent);
+        
+        // Change color based on status
+        if (percent === 100) {
+            progressBar.className = 'progress-bar bg-success';
+        } else if (message.includes('Error') || message.includes('❌')) {
+            progressBar.className = 'progress-bar bg-danger';
+        } else {
+            progressBar.className = 'progress-bar progress-bar-striped progress-bar-animated bg-info';
+        }
+    }
+    
+    if (statusDiv) {
+        statusDiv.innerHTML = `<i class="fas fa-info-circle me-2"></i>${message}`;
+    }
+}
+
+function addLogEntry(message) {
+    const logsDiv = document.getElementById('scrapingLogs');
+    if (logsDiv) {
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = document.createElement('div');
+        logEntry.innerHTML = `[${timestamp}] ${message}`;
+        logsDiv.appendChild(logEntry);
+        
+        // Auto scroll to bottom
+        logsDiv.scrollTop = logsDiv.scrollHeight;
+    }
+}
+
+function toggleForm(enabled) {
+    const btn = document.getElementById('startScrapingBtn');
+    const inputs = document.querySelectorAll('#scrapingForm input, #scrapingForm button');
+    
+    inputs.forEach(input => {
+        input.disabled = !enabled;
+    });
+    
+    if (enabled) {
+        btn.innerHTML = '<i class="fas fa-play me-2"></i>Mulai Scraping';
+        btn.className = 'btn btn-primary btn-lg';
+    } else {
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        btn.className = 'btn btn-secondary btn-lg';
+    }
+}
+
+function testConnection() {
+    // Function is defined, but endpoint is not available. Show fallback message.
+    showAlert('Test connection feature is not available.', 'info');
+}
+
+function checkSystemStatus() {
+    // ChromeDriver status check via Flask endpoint
+    const chromeStatus = document.getElementById('chromeStatus');
+    if (chromeStatus) {
+        chromeStatus.textContent = 'Checking...';
+        chromeStatus.className = 'badge bg-secondary me-2';
+        // The fetch to /check_chromedriver is disabled, so fallback to basic status
+        // chromeStatus.textContent = 'Ready';
+        // chromeStatus.className = 'badge bg-success me-2';
+    }
+    // Enhanced Sentiment Analyzer status check
+    const sentimentStatus = document.getElementById('sentimentStatus');
+    if (sentimentStatus) {
+        sentimentStatus.textContent = 'Basic v1.0';
+        sentimentStatus.className = 'badge bg-warning me-2';
+        sentimentStatus.title = 'Using basic sentiment analyzer. Enhanced features not available.';
+    }
+}
+window.addEventListener('DOMContentLoaded', checkSystemStatus);
+
+// Jalankan saat halaman dimuat
+window.addEventListener('DOMContentLoaded', checkSystemStatus);
+
+function cancelScraping() {
+    console.log('Canceling scraping...');
+    isScrapingActive = false;
+    toggleForm(true);
+    addLogEntry('❌ Scraping cancelled by user');
+}
+
+function showAlert(message, type = 'info') {
+    // Show status in the status display area
+    const statusDisplay = document.getElementById('statusDisplay');
+    const statusContent = document.getElementById('statusContent');
+    
+    if (statusDisplay && statusContent) {
+        statusContent.innerHTML = message;
+        statusDisplay.className = `mt-4 alert alert-${type}`;
+        statusDisplay.style.display = 'block';
+        
+        // Auto hide after 5 seconds for success/info messages
+        if (type === 'success' || type === 'info') {
+            setTimeout(() => {
+                statusDisplay.style.display = 'none';
+            }, 5000);
+        }
+    }
+    
+    // Also log to console
+    console.log(`Alert [${type}]: ${message}`);
+}
+
+// Function to delete CSV file
+// Function to delete CSV file
+// NOTE: This function has been replaced by showDeleteModal for consistency
+// CSV deletion now uses the same modal pattern as JSON file deletion
+
+// Handle errors globally
+window.addEventListener('error', function(e) {
+    console.error('Global error:', e.error);
+    addLogEntry(`💥 Global error: ${e.message}`);
+});
+
+// Handle modal hide event
+document.getElementById('scrapingModal').addEventListener('hidden.bs.modal', function () {
+    if (isScrapingActive) {
+        // If scraping is still active, ask for confirmation
+        if (confirm('Scraping masih berjalan. Yakin ingin menutup?')) {
+            cancelScraping();
+        } else {
+            // Show modal again
+            scrapingModal.show();
+        }
+    }
+});
+
+// Futuristic Tabs Functions
+function initializeFuturisticTabs() {
+    const tabSlider = document.getElementById('tabSlider');
+    const draftTab = document.getElementById('draft-tab');
+    const publishedTab = document.getElementById('published-tab');
+    
+    if (!tabSlider || !draftTab || !publishedTab) {
+        console.warn('Futuristic tabs elements not found');
+        return;
+    }
+    
+    // Set initial slider position
+    updateTabSlider(draftTab);
+    
+    // Add click event listeners
+    draftTab.addEventListener('click', function(e) {
+        e.preventDefault();
+        // Show draft tab content
+        const draftContent = document.getElementById('draftFiles');
+        const publishedContent = document.getElementById('publishedFiles');
+        
+        if (draftContent && publishedContent) {
+            draftContent.classList.add('show', 'active');
+            publishedContent.classList.remove('show', 'active');
+        }
+        
+        animateTabSwitch(this, publishedTab);
+    });
+    
+    publishedTab.addEventListener('click', function(e) {
+        e.preventDefault();
+        // Show published tab content
+        const draftContent = document.getElementById('draftFiles');
+        const publishedContent = document.getElementById('publishedFiles');
+        
+        if (draftContent && publishedContent) {
+            publishedContent.classList.add('show', 'active');
+            draftContent.classList.remove('show', 'active');
+        }
+        
+        animateTabSwitch(this, draftTab);
+    });
+    
+    // Add hover effects
+    draftTab.addEventListener('mouseenter', function() {
+        if (!this.classList.contains('active')) {
+            this.style.transform = 'translateY(-3px) scale(1.02)';
+        }
+    });
+    
+    draftTab.addEventListener('mouseleave', function() {
+        if (!this.classList.contains('active')) {
+            this.style.transform = '';
+        }
+    });
+    
+    publishedTab.addEventListener('mouseenter', function() {
+        if (!this.classList.contains('active')) {
+            this.style.transform = 'translateY(-3px) scale(1.02)';
+        }
+    });
+    
+    publishedTab.addEventListener('mouseleave', function() {
+        if (!this.classList.contains('active')) {
+            this.style.transform = '';
+        }
+    });
+}
+
+function updateTabSlider(activeTab) {
+    const tabSlider = document.getElementById('tabSlider');
+    const container = document.getElementById('analysisStatusTab');
+    
+    if (!tabSlider || !activeTab || !container) return;
+    
+    // Get positions relative to container
+    const containerRect = container.getBoundingClientRect();
+    const activeRect = activeTab.getBoundingClientRect();
+    
+    // Calculate position and width
+    const leftPosition = activeRect.left - containerRect.left;
+    const width = activeRect.width;
+    
+    // Update slider position and width with smooth animation
+    tabSlider.style.left = leftPosition + 'px';
+    tabSlider.style.width = width + 'px';
+    
+    // Add glow effect based on active tab
+    if (activeTab.id === 'draft-tab') {
+        tabSlider.style.background = 'linear-gradient(135deg, #ffc107 0%, #fd7e14 50%, #e83e8c 100%)';
+        tabSlider.style.boxShadow = '0 4px 20px rgba(255, 193, 7, 0.4)';
+    } else {
+        tabSlider.style.background = 'linear-gradient(135deg, #28a745 0%, #20c997 50%, #17a2b8 100%)';
+        tabSlider.style.boxShadow = '0 4px 20px rgba(40, 167, 69, 0.4)';
+    }
+}
+
+function animateTabSwitch(activeTab, inactiveTab) {
+    // Remove active state from inactive tab
+    inactiveTab.classList.remove('active');
+    inactiveTab.setAttribute('aria-selected', 'false');
+    
+    // Add active state to new tab
+    activeTab.classList.add('active');
+    activeTab.setAttribute('aria-selected', 'true');
+    
+    // Update slider position
+    updateTabSlider(activeTab);
+    
+    // Animate badges with stagger effect
+    setTimeout(() => {
+        const activeBadge = activeTab.querySelector('.badge');
+        const inactiveBadge = inactiveTab.querySelector('.badge');
+        
+        if (activeBadge) {
+            activeBadge.style.transform = 'scale(1.2)';
+            setTimeout(() => {
+                activeBadge.style.transform = 'scale(1.1)';
+            }, 150);
+        }
+        
+        if (inactiveBadge) {
+            inactiveBadge.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                inactiveBadge.style.transform = 'scale(1)';
+            }, 200);
+        }
+    }, 100);
+    
+    // Icon animation
+    const activeIcon = activeTab.querySelector('i');
+    const inactiveIcon = inactiveTab.querySelector('i');
+    
+    if (activeIcon) {
+        activeIcon.style.transform = 'scale(1.2) rotate(360deg)';
+        setTimeout(() => {
+            activeIcon.style.transform = 'scale(1.1)';
+        }, 400);
+    }
+    
+    if (inactiveIcon) {
+        inactiveIcon.style.transform = 'scale(1)';
+    }
+    
+    // Add subtle glow effect instead of ripple
+    createGlowEffect(activeTab);
+}
+
+function createGlowEffect(element) {
+    // Add temporary glow class
+    element.classList.add('tab-glow-effect');
+    
+    // Remove after animation
+    setTimeout(() => {
+        element.classList.remove('tab-glow-effect');
+    }, 800);
+}
+
+// Add ripple animation keyframes to CSS dynamically
+const glowStyle = document.createElement('style');
+glowStyle.textContent = `
+    @keyframes tabGlow {
+        0% {
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+        }
+        50% {
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.6), 0 0 30px rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px) scale(1.02);
+        }
+        100% {
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px) scale(1);
+        }
+    }
+`;
+document.head.appendChild(glowStyle);
+
+// Function to manually refresh datasets
+function manualRefreshDatasets() {
+    console.log('Manually refreshing datasets...');
+    showAlert('Refreshing datasets...', 'info');
+    
+    // Direct fetch to refresh datasets (no dependency on refreshDatasetList)
+    fetch('/refresh_datasets')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                console.log('Dataset refresh successful:', data);
+                showAlert('Dataset list refreshed successfully!', 'success');
+                
+                // Update the dataset lists in the UI if updateDatasetLists exists
+                if (typeof updateDatasetLists === 'function') {
+                    updateDatasetLists(data);
+                } else {
+                    // Fallback: reload the page
+                    window.location.reload();
+                }
+            } else {
+                console.error('Dataset refresh returned error:', data);
+                showAlert('Error refreshing datasets', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error refreshing datasets:', error);
+            showAlert('Error refreshing datasets: ' + error.message, 'danger');
+        });
+}
+
+// Legacy function for compatibility - not used directly anymore
+function refreshDatasetList() {
+    console.log('Legacy refreshDatasetList called - using manualRefreshDatasets instead');
+    manualRefreshDatasets();
+    
+    // Return a resolved promise for backward compatibility
+    return fetch('/refresh_datasets')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                console.log('Dataset refresh successful:', data);
+                showAlert('Dataset list refreshed successfully!', 'success');
+                
+                // Update the dataset lists in the UI
+                updateDatasetLists(data);
+                
+                // Return the data for chaining
+                return data;
+            } else {
+                console.error('Dataset refresh returned error:', data);
+                showAlert('Error refreshing datasets', 'danger');
+                throw new Error('Dataset refresh returned error');
+            }
+        })
+        .catch(error => {
+            console.error('Error refreshing datasets:', error);
+            showAlert('Error refreshing datasets: ' + error.message, 'danger');
+            throw error; // Re-throw for chain handling
+        });
+}
+
+// Function to update dataset lists in the UI
+function updateDatasetLists(data) {
+    // Update unanalyzed datasets select
+    const unanalyzedSelect = document.getElementById('csvFileSelect');
+    if (unanalyzedSelect) {
+        // Clear current options
+        unanalyzedSelect.innerHTML = '';
+        
+        // Add unanalyzed files
+        data.csv_files_unanalyzed.forEach(file => {
+            const option = document.createElement('option');
+            option.value = file;
+            option.textContent = file;
+            unanalyzedSelect.appendChild(option);
+        });
+        
+        // Show message if no files
+        if (data.csv_files_unanalyzed.length === 0) {
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = 'No unanalyzed datasets available';
+            option.disabled = true;
+            unanalyzedSelect.appendChild(option);
+        }
+    }
+    
+    // Update the datasets table if it exists and data.csv_files_info exists
+    if (data.csv_files_info && typeof updateDatasetsTable === 'function') {
+        updateDatasetsTable(data.csv_files_info);
+    }
+}
+
+// Function to update the datasets table
+function updateDatasetsTable(csvFilesInfo) {
+    // Guard against undefined input
+    if (!csvFilesInfo) {
+        console.error('No CSV files info provided to updateDatasetsTable');
+        return;
+    }
+    
+    try {
+        const datasetsTable = document.getElementById('datasetsTable');
+        if (datasetsTable) {
+            const tbody = datasetsTable.querySelector('tbody');
+            if (tbody) {
+                // Clear current rows
+                tbody.innerHTML = '';
+                
+                // Add rows for each file
+                csvFilesInfo.forEach(file => {
+                const row = document.createElement('tr');
+                
+                // File name cell with preview link
+                const nameCell = document.createElement('td');
+                const nameLink = document.createElement('a');
+                nameLink.href = `#`;
+                nameLink.textContent = file.filename;
+                nameLink.classList.add('text-primary');
+                nameLink.onclick = (e) => {
+                    e.preventDefault();
+                    // Add preview functionality here if needed
+                    alert('Preview for: ' + file.filename);
+                };
+                nameCell.appendChild(nameLink);
+                row.appendChild(nameCell);
+                
+                // Date cell
+                const dateCell = document.createElement('td');
+                dateCell.textContent = file.formatted_time;
+                row.appendChild(dateCell);
+                
+                // Size cell
+                const sizeCell = document.createElement('td');
+                sizeCell.textContent = file.size_formatted;
+                row.appendChild(sizeCell);
+                
+                // Actions cell
+                const actionsCell = document.createElement('td');
+                
+                // Analyze button
+                const analyzeBtn = document.createElement('button');
+                analyzeBtn.classList.add('btn', 'btn-sm', 'btn-primary', 'me-1');
+                analyzeBtn.innerHTML = '<i class="fas fa-chart-bar"></i>';
+                analyzeBtn.title = 'Analyze';
+                analyzeBtn.onclick = () => {
+                    // Set the file in the analysis form and submit
+                    const analyzeSelect = document.getElementById('csvFileSelect');
+                    if (analyzeSelect) {
+                        analyzeSelect.value = file.filename;
+                        // Scroll to analysis section
+                        document.getElementById('analyzeDatasetSection').scrollIntoView({
+                            behavior: 'smooth'
+                        });
+                    }
+                };
+                actionsCell.appendChild(analyzeBtn);
+                
+                // Delete button
+                const deleteBtn = document.createElement('button');
+                deleteBtn.classList.add('btn', 'btn-sm', 'btn-danger');
+                deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                deleteBtn.title = 'Delete';
+                deleteBtn.onclick = () => {
+                    showDeleteModal('csv', file.filename);
+                };
+                actionsCell.appendChild(deleteBtn);
+                
+                row.appendChild(actionsCell);
+                
+                // Add row to table
+                tbody.appendChild(row);
+            });
+            
+            // Show message if no files
+            if (csvFilesInfo.length === 0) {
+                const row = document.createElement('tr');
+                const cell = document.createElement('td');
+                cell.colSpan = 4;
+                cell.textContent = 'No datasets available';
+                cell.className = 'text-center';
+                row.appendChild(cell);
+                tbody.appendChild(row);
+            }
+        }
+    }
+    } catch (error) {
+        console.error('Error updating datasets table:', error);
+        // Fallback - if there's an error updating the table, just note it in the console
+        // The user can manually refresh or reload the page
+    }
+}
+
+// Function to show delete modal
+function showDeleteModal(fileType, fileName) {
+    console.log(`Showing delete modal for ${fileType}: ${fileName}`);
+    
+    // Set up modal content
+    const modalTitle = document.querySelector('#deleteModal .modal-title');
+    const fileNameLabel = document.getElementById('deleteFileNameLabel');
+    const fileTypeInput = document.getElementById('deleteFileType');
+    const fileNameInput = document.getElementById('deleteFileName');
+    
+    if (modalTitle && fileNameLabel && fileTypeInput && fileNameInput) {
+        modalTitle.innerHTML = `<i class="fas fa-trash me-2"></i>Konfirmasi Hapus File ${fileType.toUpperCase()}`;
+        fileNameLabel.textContent = fileName;
+        fileTypeInput.value = fileType;
+        fileNameInput.value = fileName;
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        modal.show();
+    } else {
+        console.error('Delete modal elements not found');
+        showAlert('Error: Could not show delete modal', 'error');
+    }
+}
+
+// Function to perform actual deletion
+function performDelete(fileType, fileName) {
+    console.log(`Performing delete for ${fileType}: ${fileName}`);
+    
+    showAlert(`Deleting ${fileType} file...`, 'info');
+    
+    const endpoint = fileType === 'csv' ? '/delete_csv' : '/delete_json';
+    const formData = new FormData();
+    formData.append('filename', fileName);
+    
+    fetch(endpoint, {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(`${fileType.toUpperCase()} file deleted successfully!`, 'success');
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteModal'));
+            if (modal) {
+                modal.hide();
+            }
+            
+            // Refresh page after short delay
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } else {
+            throw new Error(data.message || 'Delete failed');
+        }
+    })
+    .catch(error => {
+        console.error('Delete error:', error);
+        showAlert(`Failed to delete ${fileType} file: ${error.message}`, 'error');
+    });
+}
+
+// Function to handle delete form submission
+function submitDelete(event) {
+    event.preventDefault();
+    
+    const fileType = document.getElementById('deleteFileType').value;
+    const fileName = document.getElementById('deleteFileName').value;
+    
+    if (!fileType || !fileName) {
+        showAlert('Invalid delete request', 'error');
+        return;
+    }
+    
+    performDelete(fileType, fileName);
+}
+
+// Function to start sentiment analysis
+function startAnalysis(csvFileName) {
+    console.log(`Starting sentiment analysis for: ${csvFileName}`);
+    
+    if (!csvFileName) {
+        showAlert('No CSV file selected for analysis', 'error');
+        return;
+    }
+    
+    // Update and reset the progress modal elements
+    document.getElementById('analysisFileName').textContent = csvFileName;
+    document.getElementById('analysisStartTime').textContent = new Date().toLocaleTimeString();
+    document.getElementById('analysisTimeRemaining').textContent = 'Calculating...';
+    document.getElementById('analysisProgressBar').style.width = '0%';
+    document.getElementById('analysisProgressBar').textContent = '0%';
+    document.getElementById('analysisProgressBar').setAttribute('aria-valuenow', '0');
+    document.getElementById('miniProgressValue').textContent = '0';
+    document.getElementById('analysisStatusMessage').innerHTML = '<span class="badge bg-info"><i class="fas fa-spinner fa-spin me-2"></i>Initializing...</span>';
+    document.getElementById('minimizedProgress').classList.add('d-none');
+    
+    // Show loading indicator
+    showAlert('Starting sentiment analysis...', 'info');
+    
+    // Prepare form data
+    const formData = new FormData();
+    formData.append('csv_file', csvFileName);
+    
+    // Make request to start analysis
+    fetch('/analyze', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        console.log('Analysis response status:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status} ${response.statusText}`);
+        }
+        
+        return response.json();
+    })
+    .then(data => {
+        console.log('Analysis started:', data);
+        
+        if (data.status === 'started') {
+            showAlert('Sentiment analysis started successfully!', 'success');
+            
+            // Start checking analysis status
+            checkAnalysisStatus();
+        } else if (data.status === 'success') {
+            showAlert('File has already been analyzed! Redirecting to results...', 'success');
+            
+            // If there's a direct dashboard URL in the response, navigate to it after a short delay
+            if (data.dashboard_url) {
+                setTimeout(() => {
+                    window.location.href = data.dashboard_url;
+                }, 2000);
+            }
+        } else {
+            throw new Error('Failed to start analysis: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Analysis start error:', error);
+        showAlert(`Failed to start analysis: ${error.message}`, 'error');
+    });
+}
+
+// Function to check analysis status
+function checkAnalysisStatus() {
+    const statusInterval = setInterval(() => {
+        fetch('/analysis_status')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Analysis status:', data);
+                
+                if (data.status === 'completed' || data.status === 'success') {
+                    clearInterval(statusInterval);
+                    showAlert('Sentiment analysis completed!', 'success');
+                    
+                    // Get the URL for the results page from the response
+                    let dashboardUrl = data.dashboard_url || null;
+                    
+                    // If not in the response, check localStorage
+                    if (!dashboardUrl) {
+                        dashboardUrl = localStorage.getItem('pendingDashboardUrl');
+                        localStorage.removeItem('pendingDashboardUrl'); // Clear stored value
+                    }
+                    
+                    // Navigate to dashboard or refresh page
+                    setTimeout(() => {
+                        if (dashboardUrl) {
+                            window.location.href = dashboardUrl;
+                        } else {
+                            window.location.reload();
+                        }
+                    }, 2000);
+                } else if (data.status === 'error') {
+                    clearInterval(statusInterval);
+                    showAlert(`Analysis failed: ${data.message}`, 'error');
+                } else {
+                    // Still running, update progress if available
+                    const progress = data.progress || 0;
+                    const message = data.message || 'Processing...';
+                    console.log(`Analysis progress: ${progress}% - ${message}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error checking analysis status:', error);
+                clearInterval(statusInterval);
+                showAlert('Error checking analysis status', 'error');
+            });
+    }, 2000); // Check every 2 seconds
+}
+
+// Toggle function for showing/hiding analyzed datasets
+function toggleAnalyzedDatasets() {
+    const toggle = document.getElementById('showAnalyzedDatasets');
+    const container = document.querySelector('.dataset-scroll-wrapper');
+    
+    if (toggle.checked) {
+        container.classList.add('show-analyzed');
+        console.log('Showing analyzed datasets');
+    } else {
+        container.classList.remove('show-analyzed');
+        console.log('Hiding analyzed datasets');
+    }
+    
+    // Update scroll indicator if needed
+    updateScrollIndicator();
+}
+
+// Update scroll indicator based on visible datasets
+function updateScrollIndicator() {
+    const container = document.querySelector('.dataset-scroll-wrapper');
+    const scrollIndicator = document.querySelector('.scroll-indicator');
+    const visibleCards = container.querySelectorAll('.dataset-card:not(.analyzed-dataset), .dataset-card.analyzed-dataset');
+    
+    if (scrollIndicator) {
+        if (visibleCards.length > 3) {
+            scrollIndicator.style.display = 'flex';
+        } else {
+            scrollIndicator.style.display = 'none';
+        }
+    }
+}
+
+// Initialize dataset view on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Hide analyzed datasets by default
+    const container = document.querySelector('.dataset-scroll-wrapper');
+    if (container) {
+        container.classList.remove('show-analyzed');
+    }
+    
+    // Update scroll indicator
+    updateScrollIndicator();
+    
+    // Set default state for toggle
+    const toggle = document.getElementById('showAnalyzedDatasets');
+    if (toggle) {
+        toggle.checked = false;
+    }
+});
+
+console.log('Admin panel script loaded successfully - NO JQUERY REQUIRED!');
+
+// Enhanced Analysis Status Tracking
+const originalCheckAnalysisStatus = checkAnalysisStatus;
+checkAnalysisStatus = function() {
+    let analysisModal;
+    let analysisStartTime = new Date();
+    let isMinimized = false;
+    let lastProgress = 0;
+    let estimatedTimeRemaining = 'Calculating...';
+    
+    // Initialize the progress modal
+    const initModal = () => {
+        analysisModal = new bootstrap.Modal(document.getElementById('analysisProgressModal'));
+        analysisModal.show();
+        
+        // Set start time
+        document.getElementById('analysisStartTime').textContent = analysisStartTime.toLocaleTimeString();
+        
+        // Set up minimize/expand buttons
+        document.getElementById('minimizeAnalysisBtn').addEventListener('click', () => {
+            analysisModal.hide();
+            document.getElementById('minimizedProgress').classList.remove('d-none');
+            isMinimized = true;
+        });
+        
+        document.getElementById('expandAnalysisBtn').addEventListener('click', () => {
+            document.getElementById('minimizedProgress').classList.add('d-none');
+            analysisModal.show();
+            isMinimized = false;
+        });
+        
+        // Set up cancel button
+        document.getElementById('cancelAnalysisBtn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to cancel the analysis? The process will continue in the background.')) {
+                closeAnalysisUI();
+                showAlert('Analysis continues in the background', 'info');
+            }
+        });
+    };
+    
+    // Update progress UI
+    const updateProgressUI = (progress, message, filename) => {
+        // Update progress bar
+        const progressBar = document.getElementById('analysisProgressBar');
+        progressBar.style.width = `${progress}%`;
+        progressBar.textContent = `${progress}%`;
+        progressBar.setAttribute('aria-valuenow', progress);
+        
+        // Update minimized progress
+        document.getElementById('miniProgressValue').textContent = progress;
+        
+        // Update status message with appropriate styling
+        const statusContainer = document.getElementById('analysisStatusMessage');
+        let badgeClass = 'bg-info';
+        let icon = 'spinner fa-spin';
+        
+        if (progress < 20) {
+            badgeClass = 'bg-info';
+        } else if (progress < 50) {
+            badgeClass = 'bg-primary';
+        } else if (progress < 80) {
+            badgeClass = 'bg-warning text-dark';
+        } else {
+            badgeClass = 'bg-success';
+        }
+        
+        statusContainer.innerHTML = `<span class="badge ${badgeClass}"><i class="fas fa-${icon} me-2"></i>${message}</span>`;
+        
+        // Update filename
+        if (filename) {
+            document.getElementById('analysisFileName').textContent = filename;
+        }
+        
+        // Calculate estimated time remaining
+        if (progress > 0 && progress > lastProgress) {
+            const elapsedMs = new Date() - analysisStartTime;
+            const estimatedTotalMs = (elapsedMs / progress) * 100;
+            const remainingMs = estimatedTotalMs - elapsedMs;
+            
+            if (remainingMs > 0) {
+                const remainingMinutes = Math.floor(remainingMs / 60000);
+                const remainingSeconds = Math.floor((remainingMs % 60000) / 1000);
+                estimatedTimeRemaining = `~${remainingMinutes}m ${remainingSeconds}s`;
+                document.getElementById('analysisTimeRemaining').textContent = estimatedTimeRemaining;
+            }
+            
+            lastProgress = progress;
+        }
+    };
+    
+    // Close analysis UI
+    const closeAnalysisUI = () => {
+        if (analysisModal) {
+            analysisModal.hide();
+        }
+        document.getElementById('minimizedProgress').classList.add('d-none');
+    };
+    
+    // Initialize the modal
+    initModal();
+    
+    // Status check interval
+    const statusInterval = setInterval(() => {
+        fetch('/analysis_status')
+            .then(response => response.json())
+            .then(data => {
+                console.log('Analysis status:', data);
+                
+                if (data.status === 'completed' || data.status === 'success') {
+                    clearInterval(statusInterval);
+                    closeAnalysisUI();
+                    showAlert('Sentiment analysis completed!', 'success');
+                    
+                    // Get the URL for the results page from the response
+                    let dashboardUrl = data.dashboard_url || null;
+                    
+                    // If not in the response, check localStorage
+                    if (!dashboardUrl) {
+                        dashboardUrl = localStorage.getItem('pendingDashboardUrl');
+                        localStorage.removeItem('pendingDashboardUrl'); // Clear stored value
+                    }
+                    
+                    // Navigate to dashboard or refresh page
+                    setTimeout(() => {
+                        if (dashboardUrl) {
+                            window.location.href = dashboardUrl;
+                        } else {
+                            window.location.reload();
+                        }
+                    }, 2000);
+                } else if (data.status === 'error') {
+                    clearInterval(statusInterval);
+                    closeAnalysisUI();
+                    showAlert(`Analysis failed: ${data.message}`, 'error');
+                } else {
+                    // Still running, update progress if available
+                    const progress = data.progress || 0;
+                    const message = data.message || 'Processing...';
+                    const filename = data.result_file || data.original_file || '-';
+                    updateProgressUI(progress, message, filename);
+                }
+            })
+            .catch(error => {
+                console.error('Error checking analysis status:', error);
+                clearInterval(statusInterval);
+                closeAnalysisUI();
+                showAlert('Error checking analysis status', 'error');
+            });
+    }, 1000); // Check every second
+};
+</script>
+{% endblock %}

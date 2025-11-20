@@ -1,0 +1,663 @@
+{% extends "base.html" %}
+
+{% block title %}Detail Hasil - {{ results.original_file }}{% endblock %}
+
+{% block style %}
+<style>
+/* ========== ENHANCED BUTTONS FOR RESULTS PAGE ========== */
+
+/* Enhanced Dashboard Button */
+.btn-dashboard-enhanced {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+    border: none !important;
+    color: white !important;
+    padding: 14px 24px !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3) !important;
+    transition: all 0.4s ease !important;
+    position: relative !important;
+    overflow: hidden !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    margin-right: 15px !important;
+}
+
+.btn-dashboard-enhanced:hover {
+    transform: translateY(-3px) scale(1.02) !important;
+    box-shadow: 0 10px 25px rgba(40, 167, 69, 0.4) !important;
+    color: white !important;
+    text-decoration: none !important;
+}
+
+.btn-dashboard-enhanced:active {
+    transform: translateY(-1px) scale(0.98) !important;
+}
+
+.btn-dashboard-enhanced::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: -100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent) !important;
+    transition: left 0.5s !important;
+}
+
+.btn-dashboard-enhanced:hover::before {
+    left: 100% !important;
+}
+
+.dashboard-icon {
+    font-size: 18px !important;
+    animation: dashboardPulse 2s ease-in-out infinite !important;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)) !important;
+}
+
+.btn-dashboard-enhanced:hover .dashboard-icon {
+    animation: dashboardBounce 0.6s ease-in-out !important;
+}
+
+/* Enhanced PDF Button */
+.btn-export-pdf-enhanced {
+    background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important;
+    border: none !important;
+    color: white !important;
+    padding: 14px 24px !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    font-size: 16px !important;
+    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3) !important;
+    transition: all 0.4s ease !important;
+    position: relative !important;
+    overflow: hidden !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.btn-export-pdf-enhanced:hover {
+    transform: translateY(-3px) scale(1.02) !important;
+    box-shadow: 0 10px 25px rgba(231, 76, 60, 0.4) !important;
+    color: white !important;
+    text-decoration: none !important;
+}
+
+.btn-export-pdf-enhanced:active {
+    transform: translateY(-1px) scale(0.98) !important;
+}
+
+.btn-export-pdf-enhanced::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: -100% !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent) !important;
+    transition: left 0.5s !important;
+}
+
+.btn-export-pdf-enhanced:hover::before {
+    left: 100% !important;
+}
+
+.pdf-icon-enhanced {
+    font-size: 18px !important;
+    animation: pdfPulse 2s ease-in-out infinite !important;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)) !important;
+}
+
+.btn-export-pdf-enhanced:hover .pdf-icon-enhanced {
+    animation: pdfBounce 0.6s ease-in-out !important;
+}
+
+/* Animation Keyframes */
+@keyframes dashboardPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+@keyframes dashboardBounce {
+    0%, 20%, 60%, 100% { transform: translateY(0) scale(1); }
+    40% { transform: translateY(-4px) scale(1.15); }
+    80% { transform: translateY(-2px) scale(1.05); }
+}
+
+@keyframes pdfPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+@keyframes pdfBounce {
+    0%, 20%, 60%, 100% { transform: translateY(0) scale(1); }
+    40% { transform: translateY(-4px) scale(1.15); }
+    80% { transform: translateY(-2px) scale(1.05); }
+}
+
+/* Reset default DataTables sorting icons */
+table.dataTable thead .sorting,
+table.dataTable thead .sorting_asc,
+table.dataTable thead .sorting_desc {
+    background-image: none !important;
+}
+
+/* Custom sorting icons */
+table.dataTable thead th {
+    position: relative;
+    padding-right: 30px !important;
+}
+
+table.dataTable thead th.sorting:after,
+table.dataTable thead th.sorting_asc:after,
+table.dataTable thead th.sorting_desc:after {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    opacity: 0.5;
+}
+
+table.dataTable thead th.sorting:after {
+    content: "\f0dc"; /* fa-sort */
+    opacity: 0.3;
+}
+
+table.dataTable thead th.sorting_asc:after {
+    content: "\f0de"; /* fa-sort-up */
+    color: #007bff;
+    opacity: 1;
+}
+
+table.dataTable thead th.sorting_desc:after {
+    content: "\f0dd"; /* fa-sort-down */
+    color: #007bff;
+    opacity: 1;
+}
+
+/* Hover effect */
+table.dataTable thead th.sorting:hover:after {
+    opacity: 0.8;
+    color: #007bff;
+}
+
+/* Make headers look clickable */
+table.dataTable thead th {
+    cursor: pointer;
+    user-select: none;
+}
+
+table.dataTable thead th:hover {
+    background-color: #f8f9fa;
+}
+
+/* Card hover effects */
+.card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transition: box-shadow 0.3s ease;
+}
+
+/* Responsive images in cards */
+.card-body img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+}
+
+/* Alert styling improvements */
+.alert-info {
+    border-left: 4px solid #17a2b8;
+}
+
+.alert-warning {
+    border-left: 4px solid #ffc107;
+}
+</style>
+{% endblock %}
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-chart-line me-2"></i>
+        Detail Hasil Analisis
+    </h1>
+    <div>
+        <a href="{{ url_for('stakeholder_dashboard', filename=filename) }}" class="btn-dashboard-enhanced enhanced-button-force" 
+           style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important; border: none !important; color: white !important; padding: 14px 24px !important; border-radius: 12px !important; text-decoration: none !important; display: inline-flex !important; align-items: center !important; gap: 10px !important; margin-right: 15px !important; font-weight: 700 !important; font-size: 16px !important; box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3) !important; transition: all 0.4s ease !important;">
+            <i class="fas fa-chart-line dashboard-icon" style="font-size: 18px !important;"></i>
+            Lihat Dashboard
+        </a>
+        <a href="{{ url_for('export_dashboard_pdf', filename=filename) }}" class="btn-export-pdf-enhanced enhanced-button-force" target="_blank"
+           style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%) !important; border: none !important; color: white !important; padding: 14px 24px !important; border-radius: 12px !important; text-decoration: none !important; display: inline-flex !important; align-items: center !important; gap: 10px !important; font-weight: 700 !important; font-size: 16px !important; box-shadow: 0 6px 20px rgba(231, 76, 60, 0.3) !important; transition: all 0.4s ease !important;">
+            <i class="fas fa-file-pdf pdf-icon-enhanced" style="font-size: 18px !important;"></i>
+            Download PDF
+        </a>
+        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary ms-2">
+            <i class="fas fa-arrow-left me-2"></i>
+            Kembali
+        </a>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h4>{{ results.metrics.total_reviews }}</h4>
+                        <p class="mb-0">Total Ulasan</p>
+                    </div>
+                    <i class="fas fa-comments fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h4>{{ results.metrics.positive_reviews }}</h4>
+                        <p class="mb-0">Ulasan Positif</p>
+                    </div>
+                    <i class="fas fa-thumbs-up fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-danger text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h4>{{ results.metrics.negative_reviews }}</h4>
+                        <p class="mb-0">Ulasan Negatif</p>
+                    </div>
+                    <i class="fas fa-thumbs-down fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h4>{{ "%.1f"|format(results.metrics.accuracy * 100) }}%</h4>
+                        <p class="mb-0">Akurasi Model</p>
+                    </div>
+                    <i class="fas fa-bullseye fa-2x opacity-75"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Clear Filter Button di atas tabel -->
+<div class="row mb-3">
+  <div class="col-12 text-end">
+    <button id="clearFilterBtn" class="btn btn-secondary">Clear Filter</button>
+  </div>
+</div>
+
+<!-- Sample Data -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-table me-2"></i>
+            Data Hasil Analisis
+        </h5>
+        <p class="mb-0 text-muted small">
+            <i class="fas fa-info-circle me-1"></i>
+            Untuk melihat analisis bisnis lengkap dengan visualisasi dan insights, 
+            <a href="{{ url_for('stakeholder_dashboard', filename=filename) }}" class="text-decoration-none">
+                klik di sini
+            </a>
+        </p>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped" id="resultTable">
+                <thead>
+                    <tr>
+                        <th>Ulasan</th>
+                        <th>Nama Produk</th>
+                        <th>Rating</th>
+                        <th>Sentiment</th>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <th><select class="form-select form-select-sm" id="produkFilter"><option value="">Semua Produk</option></select></th>
+                        <th><select class="form-select form-select-sm" id="ratingFilter"><option value="">Semua Rating</option></select></th>
+                        <th><select class="form-select form-select-sm" id="sentimentFilter"><option value="">Semua Sentiment</option></select></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in results.data %}
+                    <tr>
+                        <td>{{ item.Ulasan[:100] }}{% if item.Ulasan|length > 100 %}...{% endif %}</td>
+                        <td>{{ item.Nama_Produk[:50] }}{% if item.Nama_Produk|length > 50 %}...{% endif %}</td>
+                        <td>{{ item.Rating }}</td>
+                        <td>
+                            {% if item.Sentiment == 'Positif' %}
+                                <span class="badge bg-success">Positif</span>
+                            {% else %}
+                                <span class="badge bg-danger">Negatif</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="text-center mt-3">
+            <small class="text-muted">
+                <i class="fas fa-info-circle me-1"></i>
+                Menampilkan {{ results.metrics.total_reviews }} data. Klik header kolom untuk mengurutkan data.
+            </small>
+        </div>
+    </div>
+</div>
+
+<!-- Rename Modal -->
+<div class="modal fade" id="renameModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="renameForm" onsubmit="submitRename(event)">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Rename File Analisis</h5>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="oldFileName" name="oldFileName">
+          <div class="mb-3">
+            <label for="newFileName" class="form-label">Nama File Baru (tanpa .json)</label>
+            <input type="text" class="form-control" id="newFileName" name="newFileName" required>
+          </div>
+          <div id="renameStatus" class="text-danger small"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-warning">Rename</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}
+
+{% block scripts %}
+<!-- jQuery (required for DataTables) -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<!-- DataTables JS -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var table = $('#resultTable').DataTable({
+        "pageLength": 10,
+        "lengthMenu": [10, 25, 50, 100],
+        "ordering": false,
+        "language": {
+            "search": "Cari:",
+            "lengthMenu": "Tampilkan _MENU_ data",
+            "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+            "paginate": {
+                "first": "Pertama",
+                "last": "Terakhir",
+                "next": "Berikutnya",
+                "previous": "Sebelumnya"
+            }
+        }
+    });
+
+    // Helper: update dropdown options based on visible data
+    function updateDropdowns() {
+        var visibleData = table.rows({search:'applied'}).data().toArray();
+        var produkSet = new Set();
+        var ratingSet = new Set();
+        var sentimentSet = new Set();
+        visibleData.forEach(function(row) {
+            produkSet.add(row[1]);
+            ratingSet.add(row[2]);
+            sentimentSet.add(row[3].replace(/<[^>]+>/g, '').trim());
+        });
+        // Update Produk
+        var $produk = $('#produkFilter');
+        var currentProduk = $produk.val();
+        $produk.empty().append('<option value="">Semua Produk</option>');
+        Array.from(produkSet).sort().forEach(function(val) {
+            $produk.append('<option value="'+val+'"'+(val===currentProduk?' selected':'')+'>'+val+'</option>');
+        });
+        // Update Rating
+        var $rating = $('#ratingFilter');
+        var currentRating = $rating.val();
+        $rating.empty().append('<option value="">Semua Rating</option>');
+        Array.from(ratingSet).sort().forEach(function(val) {
+            $rating.append('<option value="'+val+'"'+(val===currentRating?' selected':'')+'>'+val+'</option>');
+        });
+        // Update Sentiment
+        var $sentiment = $('#sentimentFilter');
+        var currentSentiment = $sentiment.val();
+        $sentiment.empty().append('<option value="">Semua Sentiment</option>');
+        if (sentimentSet.has('Positif')) $sentiment.append('<option value="Positif"'+(currentSentiment==='Positif'?' selected':'')+'>Positif</option>');
+        if (sentimentSet.has('Negatif')) $sentiment.append('<option value="Negatif"'+(currentSentiment==='Negatif'?' selected':'')+'>Negatif</option>');
+    }
+    function applyFilter() {
+        table.column(1).search($('#produkFilter').val());
+        table.column(2).search($('#ratingFilter').val());
+        table.column(3).search($('#sentimentFilter').val());
+        table.draw();
+        updateDropdowns();
+    }
+    updateDropdowns();
+    $('#produkFilter, #ratingFilter, #sentimentFilter').on('change', function() {
+        applyFilter();
+    });
+    $('#clearFilterBtn').on('click', function() {
+        $('#produkFilter').val('');
+        $('#ratingFilter').val('');
+        $('#sentimentFilter').val('');
+        applyFilter();
+    });
+    table.on('draw', function() {
+        updateDropdowns();
+    });
+});
+
+let renameModal;
+document.addEventListener('DOMContentLoaded', function() {
+    renameModal = new bootstrap.Modal(document.getElementById('renameModal'));
+});
+
+function showRenameModal(oldName) {
+    document.getElementById('oldFileName').value = oldName;
+    document.getElementById('newFileName').value = oldName.replace('.json', '');
+    document.getElementById('renameStatus').textContent = '';
+    renameModal.show();
+}
+
+function submitRename(e) {
+    e.preventDefault();
+    const oldName = document.getElementById('oldFileName').value;
+    const newName = document.getElementById('newFileName').value;
+    fetch('/rename_result', {
+        method: 'POST',
+        body: new URLSearchParams({
+            old_name: oldName,
+            new_name: newName
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            renameModal.hide();
+            location.reload();
+        } else {
+            document.getElementById('renameStatus').textContent = data.message;
+        }
+    })
+    .catch(() => {
+        document.getElementById('renameStatus').textContent = 'Terjadi kesalahan saat rename file.';
+    });
+}
+
+// Enhanced Buttons Initialization with Force Styling
+$(document).ready(function() {
+    console.log('🎯 Initializing Enhanced Buttons for Results Page...');
+    
+    // Force apply enhanced styling for both buttons
+    const dashboardBtn = document.querySelector('.btn-dashboard-enhanced');
+    const pdfBtn = document.querySelector('.btn-export-pdf-enhanced');
+    
+    if (dashboardBtn) {
+        console.log('✅ Dashboard button found - applying force enhancements');
+        
+        // Force apply dashboard styling
+        Object.assign(dashboardBtn.style, {
+            background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+            border: 'none',
+            color: 'white',
+            padding: '14px 24px',
+            borderRadius: '12px',
+            fontWeight: '700',
+            fontSize: '16px',
+            boxShadow: '0 6px 20px rgba(40, 167, 69, 0.3)',
+            transition: 'all 0.4s ease',
+            position: 'relative',
+            overflow: 'hidden',
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '10px',
+            marginRight: '15px'
+        });
+        
+        // Add hover effects
+        dashboardBtn.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-3px) scale(1.02)';
+            this.style.boxShadow = '0 10px 25px rgba(40, 167, 69, 0.4)';
+        });
+        
+        dashboardBtn.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+            this.style.boxShadow = '0 6px 20px rgba(40, 167, 69, 0.3)';
+        });
+        
+        dashboardBtn.addEventListener('mousedown', function() {
+            this.style.transform = 'translateY(-1px) scale(0.98)';
+        });
+        
+        dashboardBtn.addEventListener('mouseup', function() {
+            this.style.transform = 'translateY(-3px) scale(1.02)';
+        });
+        
+        console.log('✅ Dashboard button hover effects applied');
+    }
+    
+    if (pdfBtn) {
+        console.log('✅ PDF button found - applying force enhancements');
+        
+        // Force apply PDF styling
+        Object.assign(pdfBtn.style, {
+            background: 'linear-gradient(135deg, #e74c3c 0%, #c0392b 100%)',
+            border: 'none',
+            color: 'white',
+            padding: '14px 24px',
+            borderRadius: '12px',
+            fontWeight: '700',
+            fontSize: '16px',
+            boxShadow: '0 6px 20px rgba(231, 76, 60, 0.3)',
+            transition: 'all 0.4s ease',
+            position: 'relative',
+            overflow: 'hidden',
+            textDecoration: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '10px'
+        });
+        
+        // Add hover effects
+        pdfBtn.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-3px) scale(1.02)';
+            this.style.boxShadow = '0 10px 25px rgba(231, 76, 60, 0.4)';
+        });
+        
+        pdfBtn.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+            this.style.boxShadow = '0 6px 20px rgba(231, 76, 60, 0.3)';
+        });
+        
+        pdfBtn.addEventListener('mousedown', function() {
+            this.style.transform = 'translateY(-1px) scale(0.98)';
+        });
+        
+        pdfBtn.addEventListener('mouseup', function() {
+            this.style.transform = 'translateY(-3px) scale(1.02)';
+        });
+        
+        console.log('✅ PDF button hover effects applied');
+    }
+    
+    // Add icon animations
+    const dashboardIcon = document.querySelector('.dashboard-icon');
+    const pdfIcon = document.querySelector('.pdf-icon-enhanced');
+    
+    if (dashboardIcon && pdfIcon) {
+        // Add CSS animation via JavaScript
+        const style = document.createElement('style');
+        style.textContent = `
+            .dashboard-icon {
+                animation: dashboardPulse 2s ease-in-out infinite !important;
+                filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)) !important;
+            }
+            .pdf-icon-enhanced {
+                animation: pdfPulse 2s ease-in-out infinite !important;
+                filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)) !important;
+            }
+            .btn-dashboard-enhanced:hover .dashboard-icon {
+                animation: dashboardBounce 0.6s ease-in-out !important;
+            }
+            .btn-export-pdf-enhanced:hover .pdf-icon-enhanced {
+                animation: pdfBounce 0.6s ease-in-out !important;
+            }
+            @keyframes dashboardPulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+            }
+            @keyframes pdfPulse {
+                0%, 100% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+            }
+            @keyframes dashboardBounce {
+                0%, 20%, 60%, 100% { transform: translateY(0) scale(1); }
+                40% { transform: translateY(-4px) scale(1.15); }
+                80% { transform: translateY(-2px) scale(1.05); }
+            }
+            @keyframes pdfBounce {
+                0%, 20%, 60%, 100% { transform: translateY(0) scale(1); }
+                40% { transform: translateY(-4px) scale(1.15); }
+                80% { transform: translateY(-2px) scale(1.05); }
+            }
+        `;
+        document.head.appendChild(style);
+        console.log('✅ Icon animations injected');
+    }
+    
+    console.log('🎉 Enhanced Buttons with Force Styling completed!');
+});
+</script>
+{% endblock %}

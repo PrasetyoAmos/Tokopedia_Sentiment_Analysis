@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h3>Preview: {{ filename }}</h3>
+<table class="table table-bordered table-sm">
+    <thead>
+        <tr>
+            {% for col in columns %}
+            <th>{{ col }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in rows %}
+        <tr>
+            {% for cell in row %}
+            <td>{{ cell }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<a href="{{ url_for('admin_panel') }}" class="btn btn-secondary">Back</a>
+{% endblock %} 

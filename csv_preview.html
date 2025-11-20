@@ -1,0 +1,581 @@
+{% extends "base.html" %}
+
+{% block title %}Preview CSV - {{ file_info.filename }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --dark-gradient: linear-gradient(135deg, #434343 0%, #000000 100%);
+        --glass-bg: rgba(255, 255, 255, 0.25);
+        --glass-border: rgba(255, 255, 255, 0.18);
+        --shadow-light: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        --shadow-medium: 0 15px 35px rgba(0, 0, 0, 0.1);
+        --shadow-heavy: 0 20px 40px rgba(0, 0, 0, 0.15);
+        --border-radius: 20px;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    .container-fluid {
+        padding: 2rem;
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    /* Enhanced File Info Card */
+    .file-info-card {
+        background: var(--primary-gradient);
+        color: white;
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-light);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        position: relative;
+        overflow: hidden;
+        transform: translateY(0);
+        transition: var(--transition);
+    }
+
+    .file-info-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+        pointer-events: none;
+    }
+
+    .file-info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-heavy);
+    }
+
+    .file-info-card h2 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .file-info-card h2 i {
+        font-size: 1.5rem;
+        opacity: 0.9;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .info-item {
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        padding: 1.25rem;
+        border-radius: 15px;
+        text-align: center;
+        border: 1px solid var(--glass-border);
+        transition: var(--transition);
+        cursor: default;
+    }
+
+    .info-item:hover {
+        background: rgba(255, 255, 255, 0.35);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .info-label {
+        font-size: 0.85rem;
+        opacity: 0.8;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 500;
+    }
+
+    .info-value {
+        font-size: 1.4rem;
+        font-weight: 700;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    /* Enhanced Preview Container */
+    .preview-container {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        box-shadow: var(--shadow-medium);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        transition: var(--transition);
+    }
+
+    .preview-container:hover {
+        box-shadow: var(--shadow-heavy);
+    }
+
+    .preview-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .preview-header h4 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    /* Enhanced Back Button */
+    .btn-back {
+        background: var(--primary-gradient);
+        border: none;
+        color: white;
+        padding: 12px 24px;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: var(--transition);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-back:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        color: white;
+        text-decoration: none;
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    }
+
+    .btn-back:active {
+        transform: translateY(-1px);
+    }
+
+    /* Enhanced Alerts */
+    .alert-info {
+        background: linear-gradient(135deg, rgba(209, 236, 241, 0.9) 0%, rgba(190, 229, 235, 0.9) 100%);
+        border: 1px solid rgba(190, 229, 235, 0.5);
+        color: #0c5460;
+        border-radius: 15px;
+        margin-bottom: 1.5rem;
+        padding: 1rem 1.25rem;
+        backdrop-filter: blur(10px);
+        font-weight: 500;
+    }
+
+    .alert-info i {
+        margin-right: 0.5rem;
+        opacity: 0.8;
+    }
+
+    /* Column Information */
+    .columns-section {
+        background: rgba(248, 249, 250, 0.8);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(222, 226, 230, 0.5);
+    }
+
+    .columns-section h6 {
+        font-weight: 700;
+        color: #495057;
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+    }
+
+    .badge {
+        background: var(--primary-gradient) !important;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        font-weight: 500;
+        margin: 0.25rem;
+        transition: var(--transition);
+        cursor: default;
+        display: inline-block;
+        font-size: 0.85rem;
+    }
+
+    .badge:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    /* Enhanced Table */
+    .table-responsive {
+        max-height: 70vh;
+        overflow: auto;
+        border-radius: 15px;
+        border: 1px solid rgba(222, 226, 230, 0.3);
+        box-shadow: inset 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .table {
+        margin-bottom: 0;
+        font-size: 0.9rem;
+    }
+
+    .table th {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-top: none;
+        font-weight: 700;
+        color: #495057;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        padding: 1rem 0.75rem;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .table td {
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding: 0.875rem 0.75rem;
+        border-color: rgba(222, 226, 230, 0.5);
+        transition: var(--transition);
+        cursor: pointer;
+    }
+
+    .table tbody tr:hover {
+        background-color: rgba(102, 126, 234, 0.05);
+        transform: scale(1.001);
+    }
+
+    .table td:hover {
+        white-space: normal;
+        word-wrap: break-word;
+        background-color: rgba(102, 126, 234, 0.1);
+        border-radius: 8px;
+        transform: scale(1.02);
+        z-index: 5;
+        position: relative;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    /* Loading Animation */
+    .loading-spinner {
+        display: none;
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 20px auto;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Fade-in Animation */
+    .fade-in {
+        animation: fadeIn 0.6s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .container-fluid {
+            padding: 1rem;
+        }
+        
+        .file-info-card {
+            padding: 1.5rem;
+        }
+        
+        .info-grid {
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 0.75rem;
+        }
+        
+        .preview-container {
+            padding: 1.5rem;
+        }
+        
+        .preview-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .btn-back {
+            align-self: center;
+        }
+        
+        .table th, .table td {
+            padding: 0.5rem;
+            font-size: 0.8rem;
+        }
+    }
+
+    /* Search Box Enhancement */
+    .dataTables_filter input {
+        border: 2px solid #e9ecef;
+        border-radius: 25px;
+        padding: 8px 16px;
+        transition: var(--transition);
+        background: rgba(255, 255, 255, 0.9);
+    }
+
+    .dataTables_filter input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+
+    /* Progress Bar for Large Files */
+    .progress-container {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-top: 1rem;
+        display: none;
+    }
+
+    .progress-bar {
+        background: var(--success-gradient);
+        height: 8px;
+        border-radius: 4px;
+        width: 0%;
+        transition: width 0.3s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid fade-in">
+    <!-- Enhanced File Information Card -->
+    <div class="file-info-card">
+        <h2><i class="fas fa-file-csv"></i>{{ file_info.filename }}</h2>
+        
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">File Size</div>
+                <div class="info-value">{{ file_info.size }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Total Rows</div>
+                <div class="info-value">{{ "{:,}".format(file_info.total_rows) if file_info.total_rows != 'Unknown' else 'Unknown' }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Columns</div>
+                <div class="info-value">{{ file_info.column_count }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Preview Rows</div>
+                <div class="info-value">{{ file_info.preview_rows }}</div>
+            </div>
+        </div>
+        
+        {% if file_info.encoding_note %}
+        <div class="alert alert-info mt-3 mb-0">
+            <i class="fas fa-info-circle"></i>{{ file_info.encoding_note }}
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Enhanced Preview Container -->
+    <div class="preview-container">
+        <div class="preview-header">
+            <h4><i class="fas fa-table"></i>Data Preview</h4>
+            <a href="{{ url_for('admin_panel') }}" class="btn-back">
+                <i class="fas fa-arrow-left"></i>Back to Admin Panel
+            </a>
+        </div>
+        
+        {% if file_info.total_rows != 'Unknown' and file_info.total_rows > 100 %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            Showing first {{ file_info.preview_rows }} rows out of {{ "{:,}".format(file_info.total_rows) }} total rows.
+        </div>
+        {% endif %}
+        
+        <!-- Enhanced Column Information -->
+        <div class="columns-section">
+            <h6><i class="fas fa-columns"></i>Columns ({{ file_info.column_count }}):</h6>
+            <div class="row">
+                {% for column in file_info.columns %}
+                <div class="col-lg-2 col-md-3 col-sm-4 col-6 mb-2">
+                    <span class="badge" title="{{ column }}">{{ column }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Loading Spinner -->
+        <div class="loading-spinner" id="loadingSpinner"></div>
+        
+        <!-- Enhanced Data Table -->
+        <div class="table-responsive" id="tableContainer">
+            {{ df_html|safe }}
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Show loading spinner for large tables
+    if ($('.table tbody tr').length > 1000) {
+        $('#loadingSpinner').show();
+        setTimeout(() => {
+            $('#loadingSpinner').hide();
+            $('#tableContainer').fadeIn();
+        }, 1000);
+    }
+    
+    // Enhanced DataTable initialization
+    if ($.fn.DataTable) {
+        const table = $('#preview-table').DataTable({
+            "paging": false,
+            "searching": true,
+            "info": false,
+            "scrollX": true,
+            "scrollY": "50vh",
+            "scrollCollapse": true,
+            "language": {
+                "search": "Search data:",
+                "searchPlaceholder": "Type to filter..."
+            },
+            "columnDefs": [
+                {
+                    "targets": "_all",
+                    "render": function(data, type, row) {
+                        if (type === 'display' && data && data.length > 50) {
+                            return '<span title="' + $('<div>').text(data).html() + '">' + 
+                                   $('<div>').text(data).html().substr(0, 50) + '...</span>';
+                        }
+                        return data;
+                    }
+                }
+            ],
+            "initComplete": function() {
+                // Style the search input
+                $('.dataTables_filter input').attr('placeholder', 'Search in table...');
+                
+                // Add search icon
+                $('.dataTables_filter').prepend('<i class="fas fa-search" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #999; z-index: 10;"></i>');
+                $('.dataTables_filter input').css('padding-left', '35px');
+            }
+        });
+        
+        // Smooth scrolling for table
+        $('.table-responsive').on('scroll', function() {
+            $(this).addClass('scrolling');
+            clearTimeout($(this).data('scrollTimer'));
+            $(this).data('scrollTimer', setTimeout(() => {
+                $(this).removeClass('scrolling');
+            }, 150));
+        });
+    }
+    
+    // Enhanced tooltip for truncated cells
+    $('.table td').on('mouseenter', function() {
+        const $this = $(this);
+        if (this.offsetWidth < this.scrollWidth && !$this.attr('title')) {
+            $this.attr('title', $this.text());
+        }
+    });
+    
+    // Add ripple effect to clickable elements
+    $('.info-item, .badge, .btn-back').on('click', function(e) {
+        const $this = $(this);
+        const ripple = $('<span class="ripple"></span>');
+        
+        $this.append(ripple);
+        
+        const rect = this.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        const x = e.clientX - rect.left - size / 2;
+        const y = e.clientY - rect.top - size / 2;
+        
+        ripple.css({
+            width: size,
+            height: size,
+            left: x,
+            top: y,
+            position: 'absolute',
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.3)',
+            transform: 'scale(0)',
+            animation: 'ripple 0.6s linear',
+            pointerEvents: 'none'
+        });
+        
+        setTimeout(() => ripple.remove(), 600);
+    });
+    
+    // Add CSS for ripple animation
+    if (!$('#ripple-styles').length) {
+        $('<style id="ripple-styles">@keyframes ripple { to { transform: scale(4); opacity: 0; } }</style>').appendTo('head');
+    }
+    
+    // Keyboard shortcuts
+    $(document).on('keydown', function(e) {
+        // Ctrl/Cmd + F to focus search
+        if ((e.ctrlKey || e.metaKey) && e.keyCode === 70) {
+            e.preventDefault();
+            $('.dataTables_filter input').focus();
+        }
+        
+        // Escape to clear search
+        if (e.keyCode === 27) {
+            $('.dataTables_filter input').val('').trigger('keyup');
+        }
+    });
+    
+    // Smooth animations for dynamic content
+    $('.table tbody tr').each(function(index) {
+        $(this).css({
+            'animation-delay': (index * 50) + 'ms',
+            'animation': 'fadeInUp 0.5s ease forwards'
+        });
+    });
+    
+    // Add CSS for row animations
+    if (!$('#row-animation-styles').length) {
+        $('<style id="row-animation-styles">@keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }</style>').appendTo('head');
+    }
+});
+</script>
+{% endblock %}

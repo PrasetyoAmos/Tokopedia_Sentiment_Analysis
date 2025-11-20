@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Utama - Tokopedia Sentiment Analysis{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-tachometer-alt me-2"></i>
+        Dashboard Utama
+    </h1>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card metric-card p-4">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h3 class="mb-0">{{ csv_files|length }}</h3>
+                    <p class="mb-0">Dataset Tersedia</p>
+                </div>
+                <div class="fs-1">
+                    <i class="fas fa-database"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card positive-sentiment p-4">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h3 class="mb-0">{{ result_files|length }}</h3>
+                    <p class="mb-0">Hasil Analisis</p>
+                </div>
+                <div class="fs-1">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card negative-sentiment p-4">
+            <div class="d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h3 class="mb-0">Ready</h3>
+                    <p class="mb-0">System Status</p>
+                </div>
+                <div class="fs-1">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Analysis Results -->
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Hasil Analisis
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if result_files %}
+                    <div class="list-group list-group-flush">
+                        {% for file in result_files %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-chart-line text-primary me-2"></i>
+                                <span id="filename-{{ loop.index }}">{{ file.replace('.json', '') }}</span>
+                            </div>
+                            <div>
+                                <a href="{{ url_for('view_results', filename=file) }}" class="btn btn-sm btn-outline-info me-2">
+                                    <i class="fas fa-eye"></i> Detail
+                                </a>
+                                <a href="{{ url_for('stakeholder_dashboard', filename=file) }}" class="btn btn-sm btn-success me-2">
+                                    <i class="fas fa-dashboard"></i> Dashboard
+                                </a>
+                                <button class="btn btn-sm btn-warning me-2" onclick="showRenameModal('{{ file }}')">
+                                    <i class="fas fa-edit"></i> Rename
+                                </button>
+                                <button class="btn btn-sm btn-danger" onclick="showDeleteModal('json', '{{ file }}')">
+                                    <i class="fas fa-trash"></i> 
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-chart-line fa-3x mb-3"></i>
+                        <p>Belum ada hasil analisis.</p>
+                        <small>Analisis dataset untuk melihat hasil sentiment analysis.</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analysis Progress Modal -->
+<div class="modal fade" id="analysisModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-cog fa-spin me-2"></i>
+                    Memproses Analisis Sentimen
+                </h5>
+            </div>
+            <div class="modal-body">
+                <div class="progress progress-custom mb-3">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" id="analysisProgress" style="width: 0%"></div>
+                </div>
+                <p id="analysisStatus">Memulai analisis...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rename Modal -->
+<div class="modal fade" id="renameModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="renameForm" onsubmit="submitRename(event)">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Rename File Analisis</h5>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="oldFileName" name="oldFileName">
+          <div class="mb-3">
+            <label for="newFileName" class="form-label">Nama File Baru (tanpa .json)</label>
+            <input type="text" class="form-control" id="newFileName" name="newFileName" required>
+          </div>
+          <div id="renameStatus" class="text-danger small"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-warning">Rename</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Rename CSV Modal -->
+<div class="modal fade" id="renameCsvModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="renameCsvForm" onsubmit="submitRenameCsv(event)">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Rename Dataset CSV</h5>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="oldCsvFileName" name="oldCsvFileName">
+          <div class="mb-3">
+            <label for="newCsvFileName" class="form-label">Nama File Baru (tanpa .csv)</label>
+            <input type="text" class="form-control" id="newCsvFileName" name="newCsvFileName" required>
+          </div>
+          <div id="renameCsvStatus" class="text-danger small"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-warning">Rename</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="deleteForm" onsubmit="submitDelete(event)">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-trash me-2"></i>Konfirmasi Hapus File</h5>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="deleteFileType" name="deleteFileType">
+          <input type="hidden" id="deleteFileName" name="deleteFileName">
+          <p>Apakah Anda yakin ingin menghapus file <strong id="deleteFileNameLabel"></strong>?</p>
+          <div id="deleteStatus" class="text-danger small"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="submit" class="btn btn-danger">Hapus</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+let renameModal;
+let renameCsvModal;
+let deleteModal;
+document.addEventListener('DOMContentLoaded', function() {
+    renameModal = new bootstrap.Modal(document.getElementById('renameModal'));
+    renameCsvModal = new bootstrap.Modal(document.getElementById('renameCsvModal'));
+    deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+});
+
+function showRenameModal(oldName) {
+    document.getElementById('oldFileName').value = oldName;
+    document.getElementById('newFileName').value = oldName.replace('.json', '');
+    document.getElementById('renameStatus').textContent = '';
+    renameModal.show();
+}
+
+function submitRename(e) {
+    e.preventDefault();
+    const oldName = document.getElementById('oldFileName').value;
+    const newName = document.getElementById('newFileName').value;
+    fetch('/rename_result', {
+        method: 'POST',
+        body: new URLSearchParams({
+            old_name: oldName,
+            new_name: newName
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            renameModal.hide();
+            location.reload();
+        } else {
+            document.getElementById('renameStatus').textContent = data.message;
+        }
+    })
+    .catch(() => {
+        document.getElementById('renameStatus').textContent = 'Terjadi kesalahan saat rename file.';
+    });
+}
+
+function analyzeDataset(filename) {
+    $('#analysisModal').modal('show');
+    
+    // Start analysis
+    fetch('/analyze', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'csv_file=' + encodeURIComponent(filename)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'started') {
+            checkAnalysisStatus();
+        } else if (data.status === 'success') {
+            // File already analyzed
+            document.getElementById('analysisStatus').textContent = 'File sudah dianalisis sebelumnya. Mengarahkan ke hasil...';
+            document.getElementById('analysisProgress').style.width = '100%';
+            
+            // Redirect to dashboard
+            setTimeout(() => {
+                window.location.href = data.dashboard_url;
+            }, 2000);
+        }
+    });
+}
+
+function checkAnalysisStatus() {
+    fetch('/analysis_status')
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('analysisProgress').style.width = data.progress + '%';
+        document.getElementById('analysisStatus').textContent = data.message;
+        
+        if (data.status === 'running') {
+            setTimeout(checkAnalysisStatus, 1000);
+        } else if (data.status === 'completed' || data.status === 'success') {
+            document.getElementById('analysisStatus').textContent = 'Analisis selesai! Refreshing halaman...';
+            
+            // If there's a dashboard URL in the response, use it
+            if (data.dashboard_url) {
+                setTimeout(() => {
+                    window.location.href = data.dashboard_url;
+                }, 2000);
+            } else {
+                // Otherwise just refresh the page
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            }
+        } else if (data.status === 'error') {
+            document.getElementById('analysisStatus').textContent = 'Error: ' + data.message;
+        }
+    });
+}
+
+function showRenameCsvModal(oldName) {
+    document.getElementById('oldCsvFileName').value = oldName;
+    document.getElementById('newCsvFileName').value = oldName.replace('.csv', '');
+    document.getElementById('renameCsvStatus').textContent = '';
+    renameCsvModal.show();
+}
+
+function submitRenameCsv(e) {
+    e.preventDefault();
+    const oldName = document.getElementById('oldCsvFileName').value;
+    const newName = document.getElementById('newCsvFileName').value;
+    fetch('/rename_csv', {
+        method: 'POST',
+        body: new URLSearchParams({
+            old_name: oldName,
+            new_name: newName
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            renameCsvModal.hide();
+            location.reload();
+        } else {
+            document.getElementById('renameCsvStatus').textContent = data.message;
+        }
+    })
+    .catch(() => {
+        document.getElementById('renameCsvStatus').textContent = 'Terjadi kesalahan saat rename file.';
+    });
+}
+
+function showDeleteModal(type, filename) {
+    document.getElementById('deleteFileType').value = type;
+    document.getElementById('deleteFileName').value = filename;
+    document.getElementById('deleteFileNameLabel').textContent = filename;
+    document.getElementById('deleteStatus').textContent = '';
+    deleteModal.show();
+}
+
+function submitDelete(e) {
+    e.preventDefault();
+    const type = document.getElementById('deleteFileType').value;
+    const filename = document.getElementById('deleteFileName').value;
+    let url = '';
+    if (type === 'csv') {
+        url = '/delete_csv';
+    } else if (type === 'json') {
+        url = '/delete_json';
+    }
+    fetch(url, {
+        method: 'POST',
+        body: new URLSearchParams({ filename })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            deleteModal.hide();
+            location.reload();
+        } else {
+            document.getElementById('deleteStatus').textContent = data.message;
+        }
+    })
+    .catch(() => {
+        document.getElementById('deleteStatus').textContent = 'Terjadi kesalahan saat menghapus file.';
+    });
+}
+</script>
+{% endblock %}
