@@ -47,7 +47,8 @@ class MesinTransformer:
                 p[self._ke_label(item['label'])] += float(item['score'])
             label = max(p, key=p.get)
             hasil.append(dict(label=label, skor=round(p['Positif'] - p['Negatif'], 3), positif=round(p['Positif'], 3),
-                              negatif=round(p['Negatif'], 3), campuran=bool(p['Positif'] > 0.3 and p['Negatif'] > 0.3), klausa=[]))
+                              negatif=round(p['Negatif'], 3), campuran=bool(p['Positif'] > 0.3 and p['Negatif'] > 0.3), klausa=[],
+                              prob={k: round(v, 3) for k, v in p.items()}))
         return hasil
 
     def analisis(self, teks):

@@ -21,7 +21,11 @@ LOCK = threading.Lock()
 def _mesin(nama):
     with LOCK:
         if nama not in MESIN:
-            MESIN[nama] = buat_mesin(nama)
+            if nama == 'gabungan':  # satu model IndoBERT dipakai bersama
+                if 'transformer' not in MESIN: MESIN['transformer'] = buat_mesin('transformer')
+                MESIN[nama] = buat_mesin('gabungan', transformer=MESIN['transformer'])
+            else:
+                MESIN[nama] = buat_mesin(nama)
         return MESIN[nama]
 
 
@@ -35,11 +39,11 @@ def _jalankan(jid, sumber, nama_berkas, nama_mesin, buang_dup, awal=0):
         n_mentah = len(df)
         df, n_dup = siapkan(df, buang_dup)
         if len(df) == 0: raise ValueError('Tidak ada ulasan yang bisa dianalisis.')
-        cb(6, 'Menyiapkan mesin ' + ('IndoBERT (pertama kali agak lama)' if nama_mesin == 'transformer' else 'aturan'))
+        cb(6, 'Menyiapkan mesin ' + ('IndoBERT (pertama kali agak lama)' if nama_mesin in ('transformer', 'gabungan') else 'aturan'))
         try:
             mesin = _mesin(nama_mesin)
         except Exception as e:  # model belum terunduh / tidak ada internet / memori kurang
-            if nama_mesin != 'transformer': raise
+            if nama_mesin == 'aturan': raise
             j['catatan'] = 'IndoBERT tidak bisa dimuat, memakai mesin aturan. Penyebab: ' + str(e).splitlines()[0][:160]
             nama_mesin = 'aturan'; mesin = _mesin('aturan')
         df = label_df(df, mesin, cb)
@@ -84,7 +88,7 @@ def scrape():
     try: halaman = max(1, min(int(request.form.get('halaman', 5)), 300))
     except ValueError: return jsonify(error='Jumlah halaman harus angka.'), 400
     mesin = request.form.get('mesin', 'aturan')
-    if mesin == 'transformer' and not TRANSFORMER_AKTIF: mesin = 'aturan'
+    if mesin in ('transformer', 'gabungan') and not TRANSFORMER_AKTIF: mesin = 'aturan'
     jid = uuid.uuid4().hex[:10]; JOBS[jid] = dict(status='jalan', persen=0, pesan='Mulai')
     threading.Thread(target=_scrape_lalu_analisis, daemon=True,
                      args=(jid, url, halaman, request.form.get('tampil', '1') == '1', mesin, request.form.get('duplikat', '1') == '1')).start()
@@ -114,7 +118,7 @@ def contoh(): return jsonify(_daftar_contoh())
 @app.post('/api/mulai')
 def mulai():
     mesin = request.form.get('mesin', 'aturan')
-    if mesin == 'transformer' and not TRANSFORMER_AKTIF: mesin = 'aturan'
+    if mesin in ('transformer', 'gabungan') and not TRANSFORMER_AKTIF: mesin = 'aturan'
     dup = request.form.get('duplikat', '1') == '1'
     if 'file' in request.files and request.files['file'].filename:
         f = request.files['file']
@@ -175,8 +179,11 @@ def ulasan(jid):
     for _, r in baris.iterrows():
         d = dict(rid=int(r.rid), teks=r.Ulasan, rating=None if pd.isna(r.Rating) else int(r.Rating), label=r.label, skor=r.skor,
                  campuran=r.campuran, konflik=bool(r.konflik), produk=r.produk, aspek=json.loads(r.aspek))
-        if h['ringkasan']['mesin'] == 'aturan':
-            d['klausa'] = [dict(teks=k, pos=p, neg=n) for k, p, n in mesin.analisis(r.Ulasan)['klausa']]
+        aturan = getattr(mesin, 'aturan', mesin)
+        if h['ringkasan']['mesin'] in ('aturan', 'gabungan'):
+            d['klausa'] = [dict(teks=k, pos=p, neg=n) for k, p, n in aturan.analisis(r.Ulasan)['klausa']]
+        if 'p_pos' in r.index:
+            d['bert'] = dict(pos=round(float(r.p_pos), 2), net=round(float(r.p_net), 2), neg=round(float(r.p_neg), 2))
         out.append(d)
     return jsonify(total=int(len(df)), hal=hal, per=per, baris=out)
 
@@ -222,8 +229,8 @@ if __name__ == '__main__':
     import importlib.util as iu
     ada = all(iu.find_spec(m) for m in ('torch', 'transformers'))
     TRANSFORMER_AKTIF = (ada or a.transformer) and not a.aturan
-    DEFAULT_MESIN = 'transformer' if TRANSFORMER_AKTIF else 'aturan'
-    print('  Mesin bawaan:', 'IndoBERT (torch + transformers terdeteksi)' if TRANSFORMER_AKTIF else 'aturan bahasa (pasang torch + transformers untuk IndoBERT)')
+    DEFAULT_MESIN = 'gabungan' if TRANSFORMER_AKTIF else 'aturan'
+    print('  Mesin bawaan:', 'gabungan IndoBERT + aturan (torch + transformers terdeteksi)' if TRANSFORMER_AKTIF else 'aturan bahasa (pasang torch + transformers untuk IndoBERT)')
     if not a.tanpa_browser:
         threading.Timer(1.2, lambda: webbrowser.open(f'http://127.0.0.1:{a.port}')).start()
     print(f'\n  Buka http://127.0.0.1:{a.port}  (Ctrl+C untuk berhenti)\n')

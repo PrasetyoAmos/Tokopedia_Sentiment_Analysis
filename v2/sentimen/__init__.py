@@ -4,7 +4,10 @@ from .aspek import analisis_aspek, ASPEK
 
 
 def buat_mesin(nama='aturan', **kw):
-    """nama: 'aturan' atau 'transformer'."""
+    """nama: 'aturan', 'transformer', atau 'gabungan' (IndoBERT + aturan)."""
+    if nama == 'gabungan':
+        from .mesin_gabungan import MesinGabungan
+        return MesinGabungan(**kw)
     if nama == 'transformer':
         from .mesin_transformer import MesinTransformer
         return MesinTransformer(**kw)

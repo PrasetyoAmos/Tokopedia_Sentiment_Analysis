@@ -53,6 +53,25 @@ FRASA_NEG = {
     'stok lama': 1.5, 'tidak mulus': 1.6, 'tidak segel': 1.8, 'segel rusak': 1.8, 'segel terbuka': 1.8, 'tidak original': 2.0,
 }
 NEGASI = {'tidak', 'bukan', 'belum', 'tanpa', 'jangan', 'kurang'}
+# --- tambahan leksikon slang & keluhan umum ---
+for _k, _v in {'sobek': 1.5, 'berjamur': 1.8, 'jamur': 1.3, 'tertukar': 1.8, 'sial': 1.5, 'kesal': 1.8, 'ngehang': 1.4, 'php': 1.8, 'ghosting': 1.8,
+               'diabaikan': 1.5, 'berbeda': 1.0, 'broken': 2.0, 'damaged': 2.0, 'slow': 1.3, 'wrong': 1.6, 'shame': 1.5, 'kurang ajar': 2.0,
+               'abal-abal': 1.8, 'seret': 1.2, 'rewel': 1.2, 'melenceng': 1.5, 'menyesal': 2.2, 'kelamaan': 1.6}.items():
+    NEGATIF.setdefault(_k, _v)
+for _k, _v in {'selamat': 0.8, 'alhamdulillah': 0.8, 'gercep': 1.3, 'ciamik': 1.6, 'markotop': 1.8, 'lancar jaya': 1.5, 'sip': 1.3,
+               'puas banget': 0.5, 'mulus': 1.5, 'berkualitas': 1.5, 'tahan banting': 1.5, 'nagih': 1.5, 'betah': 1.3, 'pewe': 1.5,
+               'trusted': 1.5, 'fast': 1.3, 'kece': 1.5, 'cakep': 1.5, 'mewah': 1.3, 'elegan': 1.3, 'ngadem': 1.0}.items():
+    POSITIF.setdefault(_k, _v)
+FRASA_NEG.update({'tidak dibalas': 1.8, 'tidak pernah dibalas': 2.0, 'tidak dibales': 1.8, 'tidak muat': 1.5, 'tidak sesuai': 1.8,
+                  'tidak dikirim': 2.0, 'salah kirim': 2.0, 'tidak ada respon': 1.8, 'tidak ada balasan': 1.8, 'tidak seenak': 1.5,
+                  'tidak seperti': 1.2, 'tidak sama': 1.2, 'tidak berfungsi': 2.0, 'tidak bisa dipakai': 2.0, 'tidak worth': 1.8,
+                  'bukan original': 2.0, 'tidak recommended': 2.2, 'tidak nyesel': -1.0})
+FRASA_POS.update({'tidak usah ditanya': 1.5, 'tidak perlu diragukan': 1.8, 'tidak usah diragukan': 1.8, 'tidak diragukan': 1.5,
+                  'dengan selamat': 1.0, 'tidak ada kendala': 1.5, 'tidak ada masalah': 1.5, 'tidak nyesel': 1.8, 'tidak kecewa': 1.8,
+                  'sesuai deskripsi': 1.5, 'sesuai pesanan': 1.3, 'sesuai gambar': 1.5, 'tidak mengecewakan': 1.8, 'ga nyesel': 1.8,
+                  'pasti beli lagi': 2.0, 'beli lagi': 1.2, 'repeat order': 1.6, 'langganan': 1.0})
+FRASA_NEG.pop('tidak nyesel', None)
+
 HEDGE = {'agak', 'sedikit', 'dikit', 'lumayan'}
 KONTEKS_TUNGGU = {'kirim', 'dikirim', 'pengiriman', 'sampai', 'sampe', 'nunggu', 'menunggu', 'tunggu', 'proses', 'diproses', 'packing',
                   'respon', 'balas', 'dibalas', 'datang', 'tiba', 'paket', 'kurir', 'ekspedisi', 'resi', 'antri', 'nungguin'}

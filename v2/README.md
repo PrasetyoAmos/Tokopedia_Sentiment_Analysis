@@ -58,3 +58,10 @@ CSV sendiri taruh di `v2/data/` agar muncul sebagai pilihan cepat.
 Di halaman awal pilih **Ambil dari Tokopedia**, tempel link halaman ulasan produk, atur jumlah halaman. Chrome terbuka dan membaca ulasan, hasilnya disimpan ke `v2/data/scrape_<waktu>.csv` lalu langsung dianalisis.
 Butuh `pip install selenium beautifulsoup4`, Google Chrome, dan internet (Selenium mengunduh chromedriver sendiri; tidak perlu `chromedriver.exe`).
 Selector Tokopedia bisa berubah sewaktu-waktu; bila "Tidak ada ulasan terbaca", perbarui `parse_halaman()` di `sentimen/scraper.py`.
+
+## Mesin gabungan (IndoBERT + aturan)
+`sentimen/mesin_gabungan.py`. IndoBERT peka terhadap keluhan, aturan bahasa teliti dan bisa menjelaskan alasannya; hasil keduanya digabung (lihat docstring untuk rumusnya).
+Teks lebih dulu dinormalkan oleh `sentimen/slang.py` (kamus slang, singkatan tanpa vokal seperti "mntp", salah ketik seperti "kwalitas").
+Bandingkan ketiga mesin: `python skrip\evaluasi.py data_contoh\sampel_uji_2.csv --mesin semua`.
+`--bobot` (bobot aturan, bawaan 0,45) dan `--ambang` (bawaan 0,3) belum disetel; atur setelah label diperiksa.
+`sampel_uji_2.csv` (145 ulasan) belum pernah dipakai untuk menyetel aturan; `sampel_uji_awal.csv` dan `sampel_emas_awal.csv` sudah.

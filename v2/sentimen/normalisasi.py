@@ -30,8 +30,12 @@ def normalisasi(teks: str) -> str:
     # pisahkan emoji dari kata agar tidak menempel
     t = re.sub(r'([^\w\s.,!?\-])', r' \1 ', t)
     out = []
+    from .slang import koreksi
     for tok in re.split(r'\s+', t):
-        out.append(SLANG.get(tok, tok))
+        m = re.fullmatch(r'([^a-z0-9]*)([a-z]+(?:-[a-z]+)?)([^a-z0-9]*)', tok)  # pisahkan tanda baca yang menempel
+        awal, inti, akhir = m.groups() if m else ('', tok, '')
+        inti = SLANG.get(inti, inti)
+        out.append(awal + (koreksi(inti) if ' ' not in inti else inti) + akhir)
     return ' '.join(out)
 
 

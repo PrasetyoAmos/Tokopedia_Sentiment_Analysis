@@ -217,7 +217,7 @@ function panelRingkasan() {
   const r = S.r, p = $('#p-ringkasan');
   p.innerHTML = `
   <div class="vonis"><h1>${esc(r.judul)}</h1><p class="sub">${esc(r.subjudul)}</p>
-    <p class="meta">${id(r.n)} ulasan dari ${id(r.n_produk)} produk &middot; dinilai dari kalimatnya, bukan bintang${r.duplikat ? ' &middot; ' + id(r.duplikat) + ' ulasan kembar dibuang' : ''} &middot; mesin ${r.mesin === 'transformer' ? 'IndoBERT' : 'aturan bahasa'} &middot; ${r.detik} detik &middot; ${esc(r.berkas)}</p>${r.catatan ? `<p class="catatan">${esc(r.catatan)}</p>` : ''}</div>
+    <p class="meta">${id(r.n)} ulasan dari ${id(r.n_produk)} produk &middot; dinilai dari kalimatnya, bukan bintang${r.duplikat ? ' &middot; ' + id(r.duplikat) + ' ulasan kembar dibuang' : ''} &middot; mesin ${({ transformer: 'IndoBERT', gabungan: 'gabungan IndoBERT + aturan' })[r.mesin] || 'aturan bahasa'} &middot; ${r.detik} detik &middot; ${esc(r.berkas)}</p>${r.catatan ? `<p class="catatan">${esc(r.catatan)}</p>` : ''}</div>
   <div>${batang(r.pos_pct, r.net_pct, r.neg_pct)}
     <div class="legenda">
       <div class="p"><b data-hitung="${r.pos_pct}">0</b><span>positif &middot; ${id(r.pos)} ulasan</span></div>
@@ -332,7 +332,7 @@ async function muatUlasan() {
       ${u.rating ? `<span>Bintang ${u.rating}</span>` : ''}${u.konflik ? '<span class="pil k">bintang bertentangan</span>' : ''}<span>${esc(u.produk.slice(0, 48))}</span></div>
       <p>${esc(u.teks)}</p>
       ${u.klausa ? `<details><summary>Mengapa label ini?</summary><div class="klausa">${u.klausa.map(k => `<span>${esc(k.teks)}</span><em>${k.pos ? `<span class="ps">+${k.pos}</span> ` : ''}${k.neg ? `<span class="ng">−${k.neg}</span>` : ''}${!k.pos && !k.neg ? '<span class="kecil">netral</span>' : ''}</em>`).join('')}
-        <span class="kecil">Skor total ${u.skor > 0 ? '+' : ''}${u.skor}; di atas +0,6 positif, di bawah −0,6 negatif</span><span></span></div></details>` : ''}
+        ${u.bert ? `<span class="kecil">IndoBERT: ${Math.round(u.bert.pos * 100)}% positif · ${Math.round(u.bert.net * 100)}% netral · ${Math.round(u.bert.neg * 100)}% negatif. Label akhir menggabungkan skor kata di atas dengan IndoBERT.</span>` : `<span class="kecil">Skor total ${u.skor > 0 ? '+' : ''}${u.skor}; di atas +0,6 positif, di bawah −0,6 negatif</span>`}<span></span></div></details>` : ''}
     </article>`).join('') : `<div class="kosongan">Tidak ada ulasan yang cocok. Longgarkan salah satu penyaring.</div>`;
   const maks = Math.ceil(d.total / d.per);
   $('#u-hal').innerHTML = maks > 1 ? `<button class="tombol sekunder" ${S.hal <= 1 ? 'disabled' : ''} id="h-mun">Sebelumnya</button><span class="kecil">Halaman ${S.hal} dari ${id(maks)}</span><button class="tombol sekunder" ${S.hal >= maks ? 'disabled' : ''} id="h-maj">Berikutnya</button>` : '';

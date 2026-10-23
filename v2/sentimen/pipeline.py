@@ -63,6 +63,9 @@ def label_df(df, mesin, cb=None, ukuran=64):
     df['label'] = [h['label'] for h in hasil]
     df['skor'] = [h['skor'] for h in hasil]
     df['campuran'] = [bool(h['campuran']) for h in hasil]
+    if hasil and 'bert' in hasil[0]:
+        for k, nm in (('Positif', 'p_pos'), ('Netral', 'p_net'), ('Negatif', 'p_neg')):
+            df[nm] = [h['bert'][k] for h in hasil]
     asp = []
     for i, t in enumerate(teks):
         asp.append(json.dumps([[a, l] for a, l, _ in analisis_aspek(t)], ensure_ascii=False))

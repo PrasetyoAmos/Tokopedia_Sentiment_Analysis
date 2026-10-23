@@ -11,18 +11,23 @@ from sklearn.metrics import classification_report, confusion_matrix, f1_score, a
 from sentimen import buat_mesin
 
 ap = argparse.ArgumentParser()
-ap.add_argument('csv'); ap.add_argument('--mesin', choices=['aturan', 'transformer', 'keduanya'], default='aturan')
-ap.add_argument('--model', default=None); ap.add_argument('--tampilkan-salah', type=int, default=15)
+ap.add_argument('csv'); ap.add_argument('--mesin', choices=['aturan', 'transformer', 'gabungan', 'keduanya', 'semua'], default='aturan')
+ap.add_argument('--model', default=None); ap.add_argument('--bobot', type=float, default=0.45); ap.add_argument('--ambang', type=float, default=0.3); ap.add_argument('--tampilkan-salah', type=int, default=15)
 a = ap.parse_args()
 
 d = pd.read_csv(a.csv, encoding='utf-8-sig')
 d = d[d.label_manual.isin(['Positif', 'Negatif', 'Netral', 'Campuran'])].copy()
 urut = ['Positif', 'Negatif', 'Netral']
-daftar = ['aturan', 'transformer'] if a.mesin == 'keduanya' else [a.mesin]
+daftar = {'keduanya': ['aturan', 'transformer'], 'semua': ['aturan', 'transformer', 'gabungan']}.get(a.mesin, [a.mesin])
 ringkasan = {}
+cache = {}
 for nama in daftar:
-    kw = {'model': a.model} if (nama == 'transformer' and a.model) else {}
+    kw = {'model': a.model} if (nama in ('transformer', 'gabungan') and a.model) else {}
+    if nama == 'gabungan':
+        kw.update(bobot_aturan=a.bobot, ambang=a.ambang)
+        if 'transformer' in cache: kw['transformer'] = cache['transformer']  # pakai ulang model yang sudah dimuat
     m = buat_mesin(nama, **kw)
+    if nama == 'transformer': cache['transformer'] = m
     hasil = m.analisis_banyak(d.Ulasan.astype(str).tolist())
     d['prediksi_' + nama] = [h['label'] for h in hasil]
     d['campuran_' + nama] = [h['campuran'] for h in hasil]

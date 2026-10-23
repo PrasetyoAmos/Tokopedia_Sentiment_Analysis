@@ -64,8 +64,9 @@
     <div class="opsi">
       {% if transformer %}
       <fieldset class="seg" aria-label="Mesin analisis">
-        <label><input type="radio" name="mesin" value="transformer" {{ 'checked' if default == 'transformer' }}><span>IndoBERT</span></label>
-        <label><input type="radio" name="mesin" value="aturan" {{ 'checked' if default != 'transformer' }}><span>Aturan bahasa</span></label>
+        <label title="IndoBERT + aturan bahasa, paling teliti untuk slang"><input type="radio" name="mesin" value="gabungan" {{ 'checked' if default == 'gabungan' }}><span>Gabungan</span></label>
+        <label><input type="radio" name="mesin" value="transformer"><span>IndoBERT</span></label>
+        <label><input type="radio" name="mesin" value="aturan"><span>Aturan bahasa</span></label>
       </fieldset>
       {% else %}
       <input type="hidden" name="mesin" value="aturan">
