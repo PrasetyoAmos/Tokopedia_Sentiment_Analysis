@@ -225,7 +225,7 @@ function panelRingkasan() {
       <div class="g"><b data-hitung="${r.neg_pct}">0</b><span>negatif &middot; ${id(r.neg)} ulasan</span></div>
     </div></div>
   <div><div class="kepala-bagian"><h2 class="judul">Yang paling sering dibicarakan</h2><p class="sub">Kata yang paling membedakan ulasan positif dari negatif; makin besar makin khas. Klik kata untuk membaca ulasannya.</p></div>
-    <div class="dua"><div class="awan-kotak" style="--c:var(--pos)"><div class="awan-kepala"><h3>Dalam ulasan positif</h3><button class="mini" data-ulang>Putar ulang</button></div>${awan(r.kata.Positif, 'var(--pos)', 'Positif')}</div>
+    <div class="dua awan-dua"><div class="awan-kotak" style="--c:var(--pos)"><div class="awan-kepala"><h3>Dalam ulasan positif</h3><button class="mini" data-ulang>Putar ulang</button></div>${awan(r.kata.Positif, 'var(--pos)', 'Positif')}</div>
       <div class="awan-kotak" style="--c:var(--neg)"><div class="awan-kepala"><h3>Dalam ulasan negatif</h3><button class="mini" data-ulang>Putar ulang</button></div>${r.kata.Negatif.length ? awan(r.kata.Negatif, 'var(--neg)', 'Negatif') : '<p class="kecil" style="padding:20px">Belum ada kata keluhan yang cukup sering muncul.</p>'}</div></div>
     <details class="daftar-kata" style="margin-top:18px"><summary>Lihat daftar dengan jumlahnya</summary><div class="dua">${daftarKata('Dalam ulasan positif', 'var(--pos)', r.kata.Positif.slice(0, 14), 'Positif')}${daftarKata('Dalam ulasan negatif', 'var(--neg)', r.kata.Negatif.slice(0, 14), 'Negatif')}</div></details></div>
   <div class="grafik-dua">
@@ -376,3 +376,18 @@ function pindah(t) {
 $$('#tab button').forEach(b => b.onclick = () => { if (b.dataset.tab === 'ulasan' && !$('#u-daftar').children.length) { S.filter = {}; renderFilter(); muatUlasan(); } pindah(b.dataset.tab); });
 $('#btn-baru').onclick = () => { S.berkas = null; S.contoh = ''; file.value = ''; $$('#contoh .chip').forEach(c => c.setAttribute('aria-pressed', 'false')); tandai(); layar('awal'); };
 $('#btn-cetak').onclick = () => window.print();
+
+/* cetak: judul dokumen jadi nama file PDF, semua grafik langsung terisi, kepala laporan */
+let judulAsal = document.title;
+function namaLaporan() {
+  const r = S.r; if (!r) return 'Suara Pembeli';
+  const nama = String(r.berkas || 'ulasan').replace(/\.csv$/i, '').replace(/_\d{8}_\d{6}/, '').replace(/[\\/:*?"<>|]+/g, ' ').trim();
+  return `Laporan Sentimen - ${nama} - ${new Date().toISOString().slice(0, 10)}`;
+}
+window.addEventListener('beforeprint', () => {
+  if (!S.r) return;
+  judulAsal = document.title; document.title = namaLaporan();
+  $('#cetak-kepala').innerHTML = `<span><b>${esc(namaLaporan().replace('Laporan Sentimen - ', 'Laporan sentimen: '))}</b></span><span>${id(S.r.n)} ulasan · mesin ${({ transformer: 'IndoBERT', gabungan: 'gabungan IndoBERT + aturan' })[S.r.mesin] || 'aturan bahasa'} · dicetak ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</span>`;
+  ['ringkasan', 'topik', 'produk'].forEach(t => { const p = $('#p-' + t); isiBatang(p); isiDiver(p); animasiGrafik(p); $$('.kata .rel i', p).forEach(e => e.style.width = e.dataset.w + '%'); });
+});
+window.addEventListener('afterprint', () => { document.title = judulAsal; });

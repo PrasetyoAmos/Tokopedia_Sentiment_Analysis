@@ -195,10 +195,6 @@ td .batang{width:160px}
   .laci-isi{padding:30px 18px 50px}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
-@media print{
-  .atas,.laci,.saring,.halaman,.tutup,#p-validasi,#p-ulasan{display:none!important}
-  body{background:#fff;color:#000}.panel[hidden]{display:block!important}#p-ulasan,#p-validasi{display:none!important}
-  .panel{padding-top:18px;break-inside:avoid}.batang>div{transition:none!important}
 }
 
 /* sumber & scraping */
@@ -257,3 +253,42 @@ details.daftar-kata[open] summary{margin-bottom:16px}
 .skala{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:12.5px;color:var(--ink3)}
 .skala i{display:block;width:180px;height:10px;border-radius:5px;background:linear-gradient(90deg,var(--neg),var(--net-l) 50%,var(--pos))}
 @media (prefers-reduced-motion:reduce){.sel{opacity:1;transform:none}}
+
+/* ---------- cetak / simpan PDF ---------- */
+.cetak-kepala{display:none}
+@page{size:A4;margin:0}
+@media print{
+  :root:root:root{--ink:#172033;--ink2:#4a5468;--ink3:#7a8396;--garis:#dde2ea;--kertas:#fff;--muka:#fff;--pos:#168a6a;--pos-l:#dff3ec;--net:#aab1bf;--net-l:#eceef2;--neg:#d6453d;--neg-l:#fbe6e4;--aksen:#3f50d4;--aksen-l:#e8ebfc}
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;transition:none!important}
+  html,body{background:#fff!important;color:var(--ink)}
+  body{font-size:12.5px}
+  main{max-width:none;padding:14mm 14mm 10mm}
+  .atas,.laci,.saring,.halaman,.tutup,.mini,details.daftar-kata,#awal,#proses{display:none!important}
+  #app{display:block!important}
+  .panel[hidden]{display:block!important}
+  #p-ulasan,#p-validasi{display:none!important}
+  .panel{padding-top:0}.panel>*+*{margin-top:22px}
+  #p-topik,#p-produk{break-before:page}
+  .cetak-kepala{display:flex;justify-content:space-between;gap:16px;font-size:11.5px;color:var(--ink3);border-bottom:1px solid var(--garis);padding-bottom:8px;margin-bottom:18px}
+  .vonis h1{font-size:30px}
+  .kotak,.awan-kotak,.mtx-baris,.legenda,.vonis,.catatan,.diver,.dv,.heat,tr,.grafik-dua>*{break-inside:avoid}
+  .awan text{animation:none!important;opacity:1!important}
+  .sel{opacity:1!important;transform:none!important;animation:none!important}
+  .heat{overflow:visible}.sel{height:30px}
+  .batang>div,.dv-bar,.hist i,.kata .rel i{transition:none!important}
+  .tabel-wrap{overflow:visible;border-radius:8px}
+  table{min-width:0;table-layout:auto}
+  td,th{padding:7px 8px;font-size:11.5px}
+  td.nama{width:32%;max-width:none}
+  td .batang{width:96px}
+  .tag{font-size:10.5px;padding:1px 6px}
+  .peta text{font-size:17px}
+  .grafik-dua{grid-template-columns:1fr 1.2fr}
+  .dua{grid-template-columns:1fr 1fr;gap:16px}
+  .dv-judul,.dv{grid-template-columns:150px 1fr 1fr}
+  .legenda b{font-size:26px}
+  #p-topik>*,#p-produk>.kotak,.mtx,.grafik-dua{break-inside:avoid}
+  .awan-kotak h3{font-size:13px}
+  .awan-dua{grid-template-columns:1fr}.awan-dua .awan{max-height:250px}
+  a{color:inherit}
+}
