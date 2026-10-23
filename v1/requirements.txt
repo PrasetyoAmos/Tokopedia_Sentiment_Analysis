@@ -1,0 +1,21 @@
+# Inti
+flask
+werkzeug
+pandas
+numpy
+scikit-learn
+matplotlib
+seaborn
+wordcloud
+emoji
+joblib
+requests
+# Scraping
+beautifulsoup4
+selenium
+# Opsional (v1 tetap jalan tanpa ini)
+# Sastrawi          # stemming Bahasa Indonesia
+# weasyprint        # ekspor PDF
+# flask-weasyprint
+# torch
+# transformers      # IndoBERT, dinonaktifkan di app.py

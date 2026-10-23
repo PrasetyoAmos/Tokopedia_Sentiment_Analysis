@@ -1,49 +1,24 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
-*$py.class
-
-# Virtual environments
 venv/
-env/
-ENV/
+.venv/
+.env
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+# Data & hasil yang dibuat aplikasi saat dijalankan
+v1/uploads/
+v1/results/
+v1/ml_data/
+v1/static/plots/
+v1/static/business_reports/
+_ARSIP_*/
 
-# Large result files
-results/*.json
-!results/sample*.json
+# Biner (unduh sendiri, lihat v1/tools/README.md)
+v1/tools/chromedriver.exe
+v1/tools/temp_*/
+v1/tools/test_*/
 
-# Corrupted files
-*.corrupted.*
-
-# Backup folders
-backup*/
-archive*/
-backup_*/
-
-# Logs
-*.log
-
-# VS Code specific files
-.vscode/.cache/
-
-# Other
+# Editor / OS
+.vscode/
 .DS_Store
 Thumbs.db

@@ -1,0 +1,242 @@
+{
+  "positive": {
+    "general": [
+      "bagus", "baik", "mantap", "oke", "suka", "puas", "senang", "gembira",
+      "recommended", "recommend", "top", "terbaik", "excellent", "perfect",
+      "amazing", "fantastic", "wonderful", "great", "good", "nice", "love",
+      "sukses", "berhasil", "memuaskan", "istimewa", "luar biasa", "keren",
+      "canggih", "modern", "elegan", "mewah", "berkualitas", "premium"
+    ],
+    "fashion": [
+      "pas", "nyaman", "cocok", "modis", "trendy", "stylish", "fit", "bagus",
+      "cantik", "indah", "menarik", "fashionable", "chic", "elegant",
+      "sesuai", "tepat", "oke", "bagus banget", "cakep", "ganteng",
+      "kece", "hits", "ngetren", "up to date", "fashionable"
+    ],
+    "elektronik": [
+      "responsif", "smooth", "lancar", "kencang", "cepat", "awet", "tahan lama",
+      "canggih", "modern", "up to date", "upgrade", "fast", "quick",
+      "efficient", "powerful", "berkualitas", "original", "branded",
+      "no lag", "stabil", "handal", "reliable", "durable"
+    ],
+    "pelayanan": [
+      "ramah", "sopan", "baik", "helpful", "responsif", "cepat", "fast response",
+      "sabar", "professional", "memuaskan", "excellent service", "top service",
+      "pelayanan bagus", "komunikatif", "informatif", "jelas"
+    ],
+    "pengiriman": [
+      "cepat", "kilat", "express", "tepat waktu", "on time", "sesuai jadwal",
+      "aman", "selamat", "utuh", "rapi", "bagus", "packed with care",
+      "packaging bagus", "bubble wrap", "kardus tebal"
+    ],
+    "harga": [
+      "murah", "terjangkau", "affordable", "reasonable", "worth it", "sebanding",
+      "sesuai", "pas", "oke", "bagus", "value for money", "cost effective",
+      "ekonomis", "hemat", "budget friendly", "cheap but good"
+    ],
+    "intensifiers": [
+      "sangat", "banget", "sekali", "bgt", "bener", "super", "extra", "ultra",
+      "luar biasa", "amat", "benar-benar", "sungguh", "betul-betul", "paling",
+      "ter-", "maksimal", "optimal", "total", "full", "100%", "perfect"
+    ]
+  },
+  "negative": {
+    "general": [
+      "jelek", "buruk", "kecewa", "payah", "zonk", "mengecewakan", "terrible",
+      "awful", "bad", "worst", "sucks", "hate", "disgusting", "horrible",
+      "rubbish", "trash", "sampah", "gak worth it", "nyesel", "menyesal",
+      "sia-sia", "percuma", "bohong", "fake", "palsu", "tiruan", "kw"
+    ],
+    "service_complaints": [
+      "lama", "lambat", "tidak responsif", "gak responsif", "slow response",
+      "template bot", "cancel ditolak", "tidak lengkap", "gak lengkap",
+      "dikurangi", "kurang memuaskan", "mengecewakan", "payah", "buruk",
+      "lama banget", "lama sekali", "lama kali", "tidak memuaskan",
+      "gak memuaskan", "kurang bagus", "kurang oke", "kurang baik",
+      "tidak baik", "gak baik", "jelek", "buruk", "mengecewakan banget"
+    ],
+    "product_complaints": [
+      "tidak sesuai", "gak sesuai", "bukan ori", "tidak original", "gak original",
+      "palsu", "kw", "replica", "imitasi", "tidak lengkap", "gak lengkap",
+      "rusak", "cacat", "defect", "broken", "pecah", "sobek", "robek",
+      "tidak bagus", "gak bagus", "jelek", "buruk", "mengecewakan",
+      "tidak cocok", "gak cocok", "salah ukuran", "salah warna", "salah model"
+    ],
+    "delivery_complaints": [
+      "pengiriman lama", "kirim lama", "lama sampai", "telat", "terlambat",
+      "status tidak jelas", "tracking error", "pick up failure", "gagal kirim",
+      "tidak sampai", "gak sampai", "hilang", "tercecer", "rusak di jalan",
+      "packaging jelek", "bungkus rusak", "kardus penyok", "bubble wrap kurang"
+    ],
+    "fashion": [
+      "kebesaran", "kekecilan", "longgar", "sempit", "kusut", "luntur", "sobek",
+      "tipis", "kasar", "kaku", "tidak pas", "aneh", "jelek", "norak",
+      "ketinggalan jaman", "out of date", "tidak cocok", "salah ukuran",
+      "beda warna", "pudar", "belel", "gombal"
+    ],
+    "elektronik": [
+      "lag", "lemot", "hang", "error", "rusak", "broken", "panas", "overheat",
+      "boros", "baterai boros", "cepat habis", "tidak awet", "gampang rusak",
+      "error terus", "restart sendiri", "freeze", "slow", "lambat",
+      "tidak responsif", "macet", "stuck", "outdated", "jadul"
+    ],
+    "pelayanan": [
+      "jutek", "kasar", "tidak ramah", "sombong", "cuek", "lambat respon",
+      "tidak profesional", "bad service", "pelayanan buruk", "mengecewakan",
+      "tidak helpful", "tidak informatif", "bingung", "tidak jelas",
+      "sulit dihubungi", "slow response", "ignore", "diabaikan"
+    ],
+    "pengiriman": [
+      "lama", "lambat", "telat", "delay", "rusak", "pecah", "penyok", "basah",
+      "packaging buruk", "bungkus jelek", "tidak aman", "asal kirim",
+      "tidak hati-hati", "sembarangan", "terlambat", "over estimasi",
+      "tidak sesuai jadwal", "kurir kasar", "kurir jutek"
+    ],
+    "harga": [
+      "mahal", "expensive", "overprice", "kemahalan", "tidak worth it",
+      "tidak sebanding", "rugi", "boros", "tidak sesuai", "misleading price",
+      "hidden cost", "biaya tambahan", "tidak transparan", "zonk harga",
+      "price trap", "tourist price", "mark up"
+    ],
+    "intensifiers": [
+      "sangat", "banget", "sekali", "parah", "bgt", "super", "extra", "ultra",
+      "luar biasa", "amat", "benar-benar", "sungguh", "betul-betul", "paling",
+      "ter-", "maksimal", "total", "full", "100%", "completely", "totally"
+    ]
+  },
+  "contextual_phrases": {
+    "positive": [
+      "worth it", "sesuai ekspektasi", "lebih dari harapan", "tidak nyesel",
+      "puas banget", "recommended banget", "beli lagi", "repeat order",
+      "langganan", "trusted seller", "fast response", "pelayanan memuaskan",
+      "kualitas ok", "sesuai deskripsi", "original", "branded", "authentic",
+      "packaging rapi", "bubble wrap tebal", "aman sampai tujuan"
+    ],
+    "negative": [
+      "tidak worth it", "mengecewakan", "di bawah ekspektasi", "nyesel beli",
+      "beda sama foto", "tidak sesuai deskripsi", "kualitas rendah",
+      "murahan", "abal-abal", "gak recommended", "jangan beli", "skip aja",
+      "zonk total", "bohong", "menipu", "fake", "palsu", "kw", "tiruan",
+      "packaging asal", "rusak pas sampai", "penyok", "lecet"
+    ]
+  },
+  "emoji_weights": {
+    "😍": 2.5, "🥰": 2.5, "💖": 2.5, "❤️": 2.0, "💕": 2.0, "😘": 2.0,
+    "🤩": 2.0, "😋": 1.8, "🤤": 1.8, "🥳": 2.0, "🎉": 1.8, "👌": 1.8,
+    
+    "�": 1.5, "😀": 1.5, "😃": 1.5, "😄": 1.5, "�": 1.5, "🙂": 1.2,
+    "�": 1.8, "👏": 1.5, "🙏": 1.2, "✨": 1.5, "⭐": 1.8, "🌟": 1.8,
+    "💯": 2.0, "🔥": 1.8, "💪": 1.5, "�": 1.8, "🎯": 1.5,
+    
+    "�": 0.0, "😑": 0.0, "😶": 0.0, "🤐": 0.0, "�": -0.2, "🙄": -0.5,
+    "�": -0.8, "😏": 0.2, "🤔": 0.0, "🤷": 0.0, "�": 0.3, "😯": 0.3,
+    
+    "😕": -0.8, "😞": -1.2, "😔": -1.2, "😟": -1.0, "�": -1.0, "☹️": -1.2,
+    "�": -1.0, "😧": -1.5, "😨": -1.8, "😰": -1.8, "😱": -2.0, "😳": -1.0,
+    
+    "😠": -2.2, "😡": -2.5, "🤬": -2.8, "😤": -2.0, "💢": -2.0, "👎": -2.0,
+    "😭": -2.5, "😢": -1.8, "💔": -2.8, "😩": -2.0, "😫": -2.0, "🤮": -2.8,
+    "🤢": -2.5, "😵": -2.0, "🙃": -0.5, "�": -1.0, "🤧": -1.0, "🤒": -1.5,
+    
+    "💩": -2.5, "�": -3.0, "👿": -2.8, "💀": -2.0, "☠️": -2.0, "🤡": -1.5
+  },
+  "slang_normalization": {
+    "mantab": "mantap",
+    "mantul": "mantap",
+    "keren abis": "keren banget",
+    "top markotop": "sangat bagus",
+    "juara": "bagus",
+    "the best": "terbaik",
+    "best seller": "terbaik",
+    "worth banget": "sangat worth it",
+    "recommended banget": "sangat recommended",
+    "puas pol": "sangat puas",
+    "love banget": "sangat suka",
+    
+    "zonk": "jelek",
+    "hoax": "bohong",
+    "fake banget": "sangat palsu",
+    "sampah": "jelek",
+    "ancur": "rusak",
+    "payah": "jelek",
+    "ngaco": "tidak bagus",
+    "fail": "gagal",
+    "disaster": "sangat buruk",
+    "nightmare": "sangat buruk",
+    
+    "dgn": "dengan",
+    "gue": "saya",
+    "tdk": "tidak",
+    "blm": "belum",
+    "gx": "tidak",
+    "gk": "tidak",
+    "ga": "tidak",
+    "gak": "tidak",
+    "bgt": "banget",
+    "bngt": "banget",
+    "joss": "bagus",
+    "josss": "bagus",
+    "kece": "bagus",
+    "top": "bagus",
+    "lelet": "lambat",
+    "ribet": "susah",
+    "ori": "original",
+    "tq": "terima kasih",
+    "thx": "terima kasih",
+    "thanks": "terima kasih",
+    "makasih": "terima kasih",
+    "rec": "recommended",
+    "recomended": "recommended",
+    "recomen": "recommended",
+    "sip": "baik",
+    "siip": "baik",
+    "sippp": "baik"
+  },
+  "contrast_words": [
+    "tapi", "tetapi", "namun", "akan tetapi", "cuma", "cm", "cuman", "cmn",
+    "hanya", "sayangnya", "sayang", "padahal", "malah", "justru", "sebaliknya",
+    "tapi ya", "but", "however", "unfortunately", "sadly", "except", "kecuali",
+    "minus", "minusnya", "kelemahannya", "kekurangannya", "downside"
+  ],
+  "complaint_phrases": [
+    "gak responsif", "tidak responsif", "lama banget", "lama sekali", "lama kali",
+    "tidak lengkap", "gak lengkap", "kurang memuaskan", "tidak memuaskan",
+    "gak sesuai", "tidak sesuai", "bukan ori", "tidak original", "gak original",
+    "cancel ditolak", "dibales pake template", "bot ga mampu", "bot tidak mampu",
+    "template response", "copy paste", "automated reply", "balasan otomatis",
+    "slow response", "respon lambat", "chat diabaikan", "tidak direspon",
+    "pengiriman lama", "kirim lama", "lama sampai", "telat sampai", "terlambat",
+    "status tidak jelas", "tracking error", "pick up failure", "gagal kirim",
+    "tidak sampai", "gak sampai", "hilang", "tercecer", "rusak di jalan",
+    "packaging jelek", "bungkus rusak", "kardus penyok", "bubble wrap kurang",
+    "salah ukuran", "salah warna", "salah model", "tidak cocok", "gak cocok",
+    "rusak", "cacat", "defect", "broken", "pecah", "sobek", "robek",
+    "palsu", "kw", "replica", "imitasi", "fake", "tiruan", "bohong"
+  ],
+  "domain_keywords": {
+    "fashion": ["baju", "celana", "sepatu", "tas", "jaket", "kemeja", "dress", "kaos", "sweater", "jeans"],
+    "elektronik": ["hp", "laptop", "komputer", "handphone", "gadget", "electronic", "charger", "kabel", "speaker"],
+    "makanan": ["makanan", "minuman", "snack", "cemilan", "food", "drink", "rasa", "taste", "enak", "gurih"],
+    "kosmetik": ["makeup", "skincare", "lipstick", "foundation", "serum", "moisturizer", "cleanser", "toner"],
+    "rumah_tangga": ["perabot", "furniture", "kursi", "meja", "lemari", "kasur", "sprei", "handuk", "piring"]
+  },
+  "confidence_markers": {
+    "high_confidence": [
+      "sangat", "banget", "sekali", "luar biasa", "perfect", "excellent",
+      "terrible", "awful", "amazing", "fantastic", "horrible", "wonderful"
+    ],
+    "medium_confidence": [
+      "cukup", "lumayan", "biasa aja", "standar", "ok lah", "not bad",
+      "so so", "average", "typical", "normal", "fine"
+    ],
+    "low_confidence": [
+      "mungkin", "sepertinya", "kayaknya", "kira-kira", "agak", "sedikit",
+      "probably", "maybe", "perhaps", "somewhat", "kind of", "sort of"
+    ]
+  },
+  "negation_scope_modifiers": {
+    "scope_extenders": ["dan", "serta", "juga", "bahkan", "pun", "lagi"],
+    "scope_terminators": ["tapi", "tetapi", "namun", "akan tetapi", "malah", "justru", "padahal"],
+    "double_negation_indicators": ["bukan tidak", "tidak tidak", "gak gak", "belum belum"]
+  }
+}
