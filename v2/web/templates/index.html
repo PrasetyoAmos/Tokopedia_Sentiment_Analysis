@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="id" data-layar="awal">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Suara Pembeli</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+<header class="atas">
+  <a class="merek" href="/" aria-label="Suara Pembeli, kembali ke awal">
+    <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="2" y="13" width="5" height="11" rx="2.5" fill="var(--pos)"/><rect x="10.5" y="4" width="5" height="20" rx="2.5" fill="var(--ink)"/><rect x="19" y="9" width="5" height="15" rx="2.5" fill="var(--neg)"/></svg>
+    <span>Suara Pembeli</span>
+  </a>
+  <nav id="tab" class="tab" role="tablist" hidden>
+    <button role="tab" data-tab="ringkasan" aria-selected="true">Ringkasan</button>
+    <button role="tab" data-tab="topik">Topik</button>
+    <button role="tab" data-tab="produk">Produk</button>
+    <button role="tab" data-tab="ulasan">Ulasan</button>
+    <button role="tab" data-tab="validasi">Validasi</button>
+  </nav>
+  <div id="aksi" class="aksi" hidden>
+    <a class="tombol sekunder" id="btn-ekspor" href="#">Unduh CSV</a>
+    <button class="tombol sekunder" id="btn-cetak" type="button">Cetak laporan</button>
+    <button class="tombol" id="btn-baru" type="button">Analisis baru</button>
+  </div>
+</header>
+
+<main>
+<!-- Layar awal -->
+<section id="awal" class="awal">
+  <div class="awal-teks">
+    <h1>Apa kata pembeli, dibaca dari kalimatnya&nbsp;&mdash; bukan dari bintangnya.</h1>
+    <p>Unggah ulasan Tokopedia. Hasilnya: produk ini disukai atau tidak, dan topik apa yang paling sering dipuji atau dikeluhkan.</p>
+  </div>
+  <form id="form" class="unggah" autocomplete="off">
+    <label id="drop" class="drop" tabindex="0">
+      <input type="file" id="file" name="file" accept=".csv,text/csv" hidden>
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg>
+      <strong id="drop-judul">Tarik file CSV ke sini, atau klik untuk memilih</strong>
+      <span id="drop-info">Kolom yang dibaca: Ulasan (wajib), Nama_Produk, Rating</span>
+    </label>
+    <div id="contoh-wrap" class="contoh" hidden>
+      <span class="kecil">Atau pakai data yang sudah ada di folder <code>data</code>:</span>
+      <div id="contoh" class="contoh-daftar"></div>
+    </div>
+    <div class="opsi">
+      {% if transformer %}
+      <fieldset class="seg" aria-label="Mesin analisis">
+        <label><input type="radio" name="mesin" value="aturan" checked><span>Aturan bahasa</span></label>
+        <label><input type="radio" name="mesin" value="transformer"><span>IndoBERT</span></label>
+      </fieldset>
+      {% else %}
+      <input type="hidden" name="mesin" value="aturan">
+      {% endif %}
+      <label class="centang"><input type="checkbox" id="dup" checked><span>Buang ulasan kembar</span></label>
+      <button class="tombol besar" id="btn-mulai" type="submit" disabled>Analisis ulasan</button>
+    </div>
+    <p id="galat" class="galat" role="alert" hidden></p>
+  </form>
+</section>
+
+<!-- Layar proses -->
+<section id="proses" class="proses" hidden aria-live="polite">
+  <div class="gelombang" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <h2 id="proses-pesan">Membaca file</h2>
+  <div class="garis"><div id="proses-garis"></div></div>
+  <p class="kecil"><span id="proses-persen">0</span>%</p>
+</section>
+
+<!-- Hasil -->
+<div id="app" hidden>
+  <section id="p-ringkasan" class="panel" role="tabpanel"></section>
+  <section id="p-topik" class="panel" role="tabpanel" hidden></section>
+  <section id="p-produk" class="panel" role="tabpanel" hidden></section>
+  <section id="p-ulasan" class="panel" role="tabpanel" hidden></section>
+  <section id="p-validasi" class="panel" role="tabpanel" hidden></section>
+</div>
+</main>
+
+<aside id="laci" class="laci" hidden aria-label="Detail produk">
+  <div class="laci-latar" data-tutup></div>
+  <div class="laci-isi"><button class="tutup" data-tutup aria-label="Tutup">&times;</button><div id="laci-konten"></div></div>
+</aside>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
