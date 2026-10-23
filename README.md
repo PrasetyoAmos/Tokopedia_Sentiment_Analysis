@@ -5,6 +5,6 @@ Aplikasi sentimen analisis sederhana, termasuk scraping ulasan produk toko di To
 | Folder | Status |
 |---|---|
 | [`v1/`](v1/) | Versi skripsi, dibekukan sebagai arsip |
-| `v2/` | Direncanakan: sentimen murni dari teks komentar dan laporan per produk untuk manajemen |
+| [`v2/`](v2/) | Prototipe: sentimen murni dari teks komentar, topik yang dibicarakan, dan laporan per produk untuk manajemen (branch `v2`) |
 
 Tag `v1-original` menyimpan kondisi repo sebelum ditata ulang.
