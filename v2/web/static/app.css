@@ -200,3 +200,43 @@ td .batang{width:160px}
   body{background:#fff;color:#000}.panel[hidden]{display:block!important}#p-ulasan,#p-validasi{display:none!important}
   .panel{padding-top:18px;break-inside:avoid}.batang>div{transition:none!important}
 }
+
+/* sumber & scraping */
+.seg.mode{align-self:flex-start}
+.stack{display:flex;flex-direction:column;gap:14px}
+.isian{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--ink2)}
+.isian input{border:1px solid var(--garis);background:var(--muka);border-radius:10px;padding:12px 14px;font-weight:400;font-size:15px;color:var(--ink);min-width:0}
+.baris-isian{display:flex;gap:20px;align-items:flex-end;flex-wrap:wrap}.kecil-i input{width:130px}
+
+/* awan kata */
+.awan{width:100%;height:auto;display:block}
+.awan text{font-weight:800;letter-spacing:-.01em;cursor:pointer;transform-box:fill-box;transform-origin:center;animation:aw .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d)}
+.awan text:hover{opacity:.7;text-decoration:underline}
+@keyframes aw{from{opacity:0;transform:scale(.6)}}
+.awan-kotak{background:var(--muka);border:1px solid var(--garis);border-radius:14px;padding:14px}
+.awan-kotak h3{font-size:15px;font-weight:800;margin:2px 4px 6px;display:flex;align-items:center;gap:8px}
+.awan-kotak h3::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--c)}
+details.daftar-kata summary{cursor:pointer;font-weight:700;color:var(--aksen);width:max-content}
+details.daftar-kata[open] summary{margin-bottom:16px}
+
+/* donut & histogram & scatter */
+.grafik-dua{display:grid;grid-template-columns:1fr 1.3fr;gap:24px}
+.kotak{background:var(--muka);border:1px solid var(--garis);border-radius:14px;padding:20px}
+.kotak h3{font-size:15px;font-weight:800}.kotak .kecil{margin-top:2px}
+.donut-wrap{display:flex;gap:22px;align-items:center;flex-wrap:wrap;margin-top:14px}
+.donut{width:170px;height:170px;flex:none}
+.donut circle{fill:none;stroke-width:26;transition:stroke-dasharray 1.1s cubic-bezier(.2,.8,.2,1)}
+.donut text{font-weight:800;fill:var(--ink)}
+.donut-leg{display:flex;flex-direction:column;gap:6px;font-size:13.5px;flex:1;min-width:140px}
+.donut-leg div{display:flex;align-items:center;gap:8px}.donut-leg i{width:10px;height:10px;border-radius:3px;flex:none}.donut-leg b{margin-left:auto;font-weight:700}
+.hist{display:flex;align-items:flex-end;gap:6px;height:180px;margin-top:16px}
+.hist>div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:4px;font-size:12px;color:var(--ink2);font-weight:600}
+.hist i{display:block;width:100%;border-radius:6px 6px 2px 2px;height:0;transition:height 1s cubic-bezier(.2,.8,.2,1)}
+.hist-sumbu{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink3);margin-top:8px}
+.hist-x{display:flex;gap:6px;font-size:11.5px;color:var(--ink3);text-align:center}.hist-x span{flex:1}
+.peta{width:100%;height:auto;display:block;overflow:visible}
+.peta circle{cursor:pointer;opacity:.75;transition:opacity .15s,r .6s cubic-bezier(.2,.8,.2,1)}
+.peta circle:hover{opacity:1;stroke:var(--ink);stroke-width:2}
+.peta text{font-size:11.5px;fill:var(--ink3)}.peta line{stroke:var(--garis)}
+@media (max-width:860px){.grafik-dua{grid-template-columns:1fr}}
+@media print{.awan text{animation:none!important}}

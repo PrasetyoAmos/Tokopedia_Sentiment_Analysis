@@ -24,9 +24,9 @@ def _mesin(nama):
         return MESIN[nama]
 
 
-def _jalankan(jid, sumber, nama_berkas, nama_mesin, buang_dup):
+def _jalankan(jid, sumber, nama_berkas, nama_mesin, buang_dup, awal=0):
     j = JOBS[jid]
-    def cb(p, m): j.update(persen=p, pesan=m)
+    def cb(p, m): j.update(persen=int(awal + p * (100 - awal) / 100), pesan=m)
     try:
         t0 = time.time()
         cb(3, 'Membaca file')
@@ -51,6 +51,37 @@ def _mulai(sumber, nama, mesin, dup):
     JOBS[jid] = dict(status='jalan', persen=0, pesan='Mulai')
     threading.Thread(target=_jalankan, args=(jid, sumber, nama, mesin, dup), daemon=True).start()
     return jid
+
+
+def _scrape_lalu_analisis(jid, url, halaman, tampil, nama_mesin, dup):
+    j = JOBS[jid]
+    try:
+        from sentimen.scraper import ambil
+        data = ambil(url, halaman, tampil, cb=lambda p, m: j.update(persen=p, pesan=m))
+        if not data: raise ValueError('Tidak ada ulasan yang berhasil diambil.')
+        os.makedirs(os.path.join(DIR, 'data'), exist_ok=True)
+        nama = time.strftime('scrape_%Y%m%d_%H%M%S.csv')
+        pd.DataFrame(data).to_csv(os.path.join(DIR, 'data', nama), index=False, encoding='utf-8-sig')
+        j.update(persen=40, pesan=f'{len(data)} ulasan terambil, mulai menganalisis')
+        _jalankan(jid, os.path.join(DIR, 'data', nama), nama, nama_mesin, dup, awal=40)
+    except ImportError:
+        j.update(status='gagal', pesan='Fitur ini butuh: pip install selenium beautifulsoup4')
+    except Exception as e:
+        j.update(status='gagal', pesan=str(e))
+
+
+@app.post('/api/scrape')
+def scrape():
+    url = request.form.get('url', '').strip()
+    if 'tokopedia.com' not in url: return jsonify(error='Tempel link halaman ulasan produk dari tokopedia.com.'), 400
+    try: halaman = max(1, min(int(request.form.get('halaman', 5)), 300))
+    except ValueError: return jsonify(error='Jumlah halaman harus angka.'), 400
+    mesin = request.form.get('mesin', 'aturan')
+    if mesin == 'transformer' and not TRANSFORMER_AKTIF: mesin = 'aturan'
+    jid = uuid.uuid4().hex[:10]; JOBS[jid] = dict(status='jalan', persen=0, pesan='Mulai')
+    threading.Thread(target=_scrape_lalu_analisis, daemon=True,
+                     args=(jid, url, halaman, request.form.get('tampil', '1') == '1', mesin, request.form.get('duplikat', '1') == '1')).start()
+    return jsonify(id=jid)
 
 
 @app.get('/')

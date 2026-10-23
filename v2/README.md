@@ -53,3 +53,8 @@ Kolom CSV: `Ulasan` (wajib), `Nama_Produk`, `Rating` (opsional; hanya untuk memb
 Tab: Ringkasan, Topik, Produk (klik baris untuk detail), Ulasan (dengan "Mengapa label ini?"), Validasi (akurasi dari label manual Anda).
 IndoBERT: `pip install torch transformers`, lalu `python app.py --transformer` dan pilih "IndoBERT" di halaman awal.
 CSV sendiri taruh di `v2/data/` agar muncul sebagai pilihan cepat.
+
+## Ambil ulasan dari Tokopedia
+Di halaman awal pilih **Ambil dari Tokopedia**, tempel link halaman ulasan produk, atur jumlah halaman. Chrome terbuka dan membaca ulasan, hasilnya disimpan ke `v2/data/scrape_<waktu>.csv` lalu langsung dianalisis.
+Butuh `pip install selenium beautifulsoup4`, Google Chrome, dan internet (Selenium mengunduh chromedriver sendiri; tidak perlu `chromedriver.exe`).
+Selector Tokopedia bisa berubah sewaktu-waktu; bila "Tidak ada ulasan terbaca", perbarui `parse_halaman()` di `sentimen/scraper.py`.

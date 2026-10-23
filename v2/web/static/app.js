@@ -30,7 +30,7 @@ function tandai() {
   drop.classList.toggle('terisi', !!nama);
   $('#drop-judul').textContent = nama || 'Tarik file CSV ke sini, atau klik untuk memilih';
   $('#drop-info').textContent = S.berkas ? (S.berkas.size / 1024 / 1024 > 1 ? (S.berkas.size / 1048576).toFixed(1) + ' MB' : Math.round(S.berkas.size / 1024) + ' KB') : (nama ? 'Dari folder data' : 'Kolom yang dibaca: Ulasan (wajib), Nama_Produk, Rating');
-  $('#btn-mulai').disabled = !nama;
+  segarkanTombol();
   $('#galat').hidden = true;
 }
 file.addEventListener('change', () => file.files[0] && pilihBerkas(file.files[0]));
@@ -50,15 +50,27 @@ fetch('/api/contoh').then(r => r.json()).then(l => {
   }));
 });
 
+const mode = () => new FormData(form).get('mode');
+$$('[name=mode]').forEach(r => r.addEventListener('change', () => {
+  $('#mode-csv').hidden = mode() !== 'csv'; $('#mode-web').hidden = mode() !== 'web'; segarkanTombol();
+}));
+function segarkanTombol() {
+  $('#btn-mulai').disabled = mode() === 'web' ? !/tokopedia\.com/i.test($('#url').value) : !(S.berkas || S.contoh);
+  $('#btn-mulai').textContent = mode() === 'web' ? 'Ambil dan analisis' : 'Analisis ulasan';
+}
+$('#url').addEventListener('input', segarkanTombol);
+
 form.addEventListener('submit', async e => {
   e.preventDefault();
+  const web = mode() === 'web';
   const fd = new FormData();
-  if (S.berkas) fd.append('file', S.berkas); else fd.append('contoh', S.contoh);
+  if (web) { fd.append('url', $('#url').value.trim()); fd.append('halaman', $('#halaman').value); fd.append('tampil', $('#tampil').checked ? '1' : '0'); }
+  else if (S.berkas) fd.append('file', S.berkas); else fd.append('contoh', S.contoh);
   fd.append('mesin', (new FormData(form).get('mesin')) || 'aturan');
   fd.append('duplikat', $('#dup').checked ? '1' : '0');
-  layar('proses'); setProses(2, 'Mengunggah');
+  layar('proses'); setProses(2, web ? 'Menyiapkan Chrome' : 'Mengunggah');
   try {
-    const r = await fetch('/api/mulai', { method: 'POST', body: fd });
+    const r = await fetch(web ? '/api/scrape' : '/api/mulai', { method: 'POST', body: fd });
     const j = await r.json(); if (!r.ok) throw new Error(j.error || 'Gagal memulai.');
     S.jid = j.id;
     for (;;) {
@@ -122,6 +134,60 @@ function matriks(m) {
   }).join('') + `</div>`;
 }
 
+/* awan kata: tata letak spiral, tanpa pustaka */
+function awan(arr, warna, filterLabel) {
+  const W = 560, H = 300, kotak = [];
+  const m = Math.max(1, ...arr.map(k => k.jumlah)), n0 = Math.min(...arr.map(k => k.jumlah));
+  const tabrak = b => kotak.some(o => b.x < o.x + o.w && b.x + b.w > o.x && b.y < o.y + o.h && b.y + b.h > o.y);
+  let out = '';
+  arr.slice(0, 38).forEach((k, i) => {
+    const t = m === n0 ? .5 : Math.log(k.jumlah / n0 + 1) / Math.log(m / n0 + 1);
+    const fs = Math.round(15 + 31 * Math.pow(t, .9)), w = k.kata.length * fs * .6 + 6, h = fs * 1.05;
+    for (let a = 0, r = 0; r < 320; a += .45, r += .9) {
+      const x = W / 2 + r * 1.9 * Math.cos(a) - w / 2, y = H / 2 + r * Math.sin(a) - h / 2, b = { x, y, w, h };
+      if (x < 2 || y < 2 || x + w > W - 2 || y + h > H - 2 || tabrak(b)) continue;
+      kotak.push(b);
+      out += `<text x="${(x + w / 2).toFixed(1)}" y="${(y + h * .8).toFixed(1)}" font-size="${fs}" fill="${warna}" text-anchor="middle" data-cari="${esc(k.kata)}" data-label="${filterLabel}" style="--d:${(i * 28)}ms"><title>${esc(k.kata)}: ${id(k.jumlah)} ulasan</title>${esc(k.kata)}</text>`;
+      break;
+    }
+  });
+  return `<svg class="awan" viewBox="0 0 ${W} ${H}" role="img" aria-label="Awan kata ${filterLabel}">${out}</svg>`;
+}
+function donut(aspek) {
+  const tot = aspek.reduce((a, x) => a + x.total, 0) || 1;
+  const wr = ['#3f50d4', '#168a6a', '#e0a526', '#d6453d', '#7b61c9', '#2b9bb8', '#8d96a8'];
+  const R = 62, C = 2 * Math.PI * R; let off = 0;
+  const arcs = aspek.filter(a => a.total).map((a, i) => {
+    const len = a.total / tot * C, el = `<circle cx="85" cy="85" r="${R}" stroke="${wr[i % 7]}" stroke-dasharray="0 ${C}" data-dash="${Math.max(0, len - 2)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 85 85)"/>`;
+    off += len; return el;
+  }).join('');
+  const leg = aspek.filter(a => a.total).map((a, i) => `<div><i style="background:${wr[i % 7]}"></i>${esc(a.nama)}<b>${Math.round(a.total / tot * 100)}%</b></div>`).join('');
+  return `<div class="donut-wrap"><svg class="donut" viewBox="0 0 170 170" role="img" aria-label="Porsi topik"><circle cx="85" cy="85" r="${R}" stroke="var(--net-l)"/>${arcs}
+    <text x="85" y="86" text-anchor="middle" font-size="26">${id(tot)}</text><text x="85" y="106" text-anchor="middle" font-size="11" style="font-weight:500;fill:var(--ink3)">sebutan topik</text></svg><div class="donut-leg">${leg}</div></div>`;
+}
+function histogram(h) {
+  const m = Math.max(1, ...h.map(b => b.n));
+  const lab = x => x <= -4 ? '≤−4' : x >= 4 ? '≥4' : (x > 0 ? '+' : x < 0 ? '−' : '') + Math.abs(x);
+  return `<div class="hist">${h.map(b => `<div>${b.n ? id(b.n) : ''}<i data-h="${b.n / m * 100}" style="background:${b.x < 0 ? 'var(--neg)' : b.x > 0 ? 'var(--pos)' : 'var(--net)'}"></i></div>`).join('')}</div>
+    <div class="hist-x">${h.map(b => `<span>${lab(b.x)}</span>`).join('')}</div><div class="hist-sumbu"><span>← keluhan kuat</span><span>pujian kuat →</span></div>`;
+}
+function peta(prod) {
+  const W = 1100, H = 340, L = 50, B = 46, mx = Math.max(10, ...prod.map(p => p.neg)) * 1.1, my = Math.max(...prod.map(p => p.n));
+  const X = v => L + v / mx * (W - L - 12), Y = v => H - B - Math.sqrt(v / my) * (H - B - 14);
+  const grid = [0, .25, .5, 1].map(f => { const v = my * f * f; return `<line x1="${L}" x2="${W}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${L - 6}" y="${Y(v) + 4}" text-anchor="end">${Math.round(v)}</text>`; }).join('');
+  const xs = [0, .25, .5, .75, 1].map(f => `<text x="${X(mx * f / 1.1 * 1.1)}" y="${H - 26}" text-anchor="middle">${Math.round(mx * f)}%</text>`).join('');
+  const dots = prod.map(p => `<circle cx="${X(p.neg)}" cy="${Y(p.n)}" r="0" data-r="${6 + Math.sqrt(p.n / my) * 8}" fill="${p.neg >= 20 ? 'var(--neg)' : p.pos >= 70 ? 'var(--pos)' : 'var(--net)'}" data-nama="${esc(p.nama)}"><title>${esc(p.nama)}&#10;${id(p.n)} ulasan · ${pct(p.pos)} positif · ${pct(p.neg)} negatif</title></circle>`).join('');
+  return `<svg class="peta" viewBox="0 0 ${W} ${H}" role="img" aria-label="Peta produk">${grid}${xs}${dots}<text x="${L}" y="8">ulasan ↑</text><text x="${W}" y="${H - 2}" text-anchor="end">% ulasan negatif →</text></svg>`;
+}
+function animasiGrafik(root) {
+  const go = () => {
+    $$('[data-dash]', root).forEach(c => c.setAttribute('stroke-dasharray', c.dataset.dash));
+    $$('[data-h]', root).forEach(e => e.style.height = e.dataset.h + '%');
+    $$('[data-r]', root).forEach(c => c.setAttribute('r', c.dataset.r));
+  };
+  if (hemat) go(); else requestAnimationFrame(() => requestAnimationFrame(go));
+}
+
 /* ---------- panel ---------- */
 function tampilkan() {
   const r = S.r;
@@ -141,13 +207,18 @@ function panelRingkasan() {
       <div class="n"><b data-hitung="${r.net_pct}">0</b><span>netral &middot; ${id(r.net)} ulasan</span></div>
       <div class="g"><b data-hitung="${r.neg_pct}">0</b><span>negatif &middot; ${id(r.neg)} ulasan</span></div>
     </div></div>
-  <div><div class="kepala-bagian"><h2 class="judul">Yang paling sering dibicarakan</h2><p class="sub">Kata yang paling membedakan ulasan positif dari negatif. Klik kata untuk membaca ulasannya.</p></div>
-    <div class="dua">${daftarKata('Dalam ulasan positif', 'var(--pos)', r.kata.Positif, 'Positif')}${daftarKata('Dalam ulasan negatif', 'var(--neg)', r.kata.Negatif, 'Negatif')}</div></div>
+  <div><div class="kepala-bagian"><h2 class="judul">Yang paling sering dibicarakan</h2><p class="sub">Kata yang paling membedakan ulasan positif dari negatif; makin besar makin khas. Klik kata untuk membaca ulasannya.</p></div>
+    <div class="dua"><div class="awan-kotak" style="--c:var(--pos)"><h3>Dalam ulasan positif</h3>${awan(r.kata.Positif, 'var(--pos)', 'Positif')}</div>
+      <div class="awan-kotak" style="--c:var(--neg)"><h3>Dalam ulasan negatif</h3>${r.kata.Negatif.length ? awan(r.kata.Negatif, 'var(--neg)', 'Negatif') : '<p class="kecil" style="padding:20px">Belum ada kata keluhan yang cukup sering muncul.</p>'}</div></div>
+    <details class="daftar-kata" style="margin-top:18px"><summary>Lihat daftar dengan jumlahnya</summary><div class="dua">${daftarKata('Dalam ulasan positif', 'var(--pos)', r.kata.Positif.slice(0, 14), 'Positif')}${daftarKata('Dalam ulasan negatif', 'var(--neg)', r.kata.Negatif.slice(0, 14), 'Negatif')}</div></details></div>
+  <div class="grafik-dua">
+    <div class="kotak"><h3>Porsi topik</h3><p class="kecil">Seberapa sering tiap topik disebut</p>${donut(r.aspek)}</div>
+    <div class="kotak"><h3>Seberapa kuat nada ulasannya</h3><p class="kecil">Jumlah ulasan menurut skor sentimen; 0 berarti netral</p>${histogram(r.hist)}</div></div>
   ${r.ada_rating ? `<div><div class="kepala-bagian"><h2 class="judul">Bintang vs isi kalimat</h2><p class="sub">Tiap baris: ulasan dengan bintang tersebut, dibagi menurut sentimen kalimatnya.</p></div>
     ${matriks(r.matriks)}
     <p class="catatan"><b>${id(r.konflik)} ulasan (${pct(r.konflik_pct)})</b> bintangnya bertentangan dengan isinya &mdash; misalnya bintang 5 tapi mengeluh, atau bintang 1&ndash;2 tapi memuji. Inilah yang tidak terlihat jika hanya memakai rating. <button data-konflik>Baca ulasannya</button></p></div>` : ''}`;
   $$('[data-hitung]', p).forEach(e => hitung(e, +e.dataset.hitung, true));
-  isiBatang(p);
+  isiBatang(p); animasiGrafik(p);
   $$('.kata .rel i', p).forEach(e => e.style.width = e.dataset.w + '%');
   $$('[data-cari]', p).forEach(a => a.onclick = () => bacaUlasan({ q: a.dataset.cari, label: a.dataset.label }));
   const k = $('[data-konflik]', p); if (k) k.onclick = () => bacaUlasan({ konflik: '1' });
@@ -164,7 +235,9 @@ function panelProduk() {
   const r = S.r, p = $('#p-produk');
   if (r.produk.length < 1) { p.innerHTML = `<div class="kosongan">Tidak ada produk dengan cukup ulasan. File perlu kolom <code>Nama_Produk</code>.</div>`; return; }
   p.innerHTML = `<div class="kepala-bagian"><h2 class="judul">Per produk</h2><p class="sub">Produk dengan sedikitnya 8 ulasan, diurutkan dari yang paling banyak diulas. Klik judul kolom untuk mengurutkan, klik baris untuk melihat detail.</p></div>
+  <div class="kotak"><h3>Peta produk</h3><p class="kecil">Tiap lingkaran satu produk: makin ke kanan makin banyak keluhan, makin ke atas makin banyak diulas. Hijau umumnya puas, merah ≥20% negatif. Klik untuk detail.</p>${peta(r.produk)}</div>
   <div class="tabel-wrap"><table><thead><tr><th data-k="nama">Produk</th><th data-k="n" aria-sort="descending">Ulasan</th><th data-k="pos">Sentimen</th><th data-k="pos">Positif</th><th data-k="neg">Negatif</th>${r.ada_rating ? '<th data-k="rating">Bintang</th>' : ''}<th>Topik utama</th></tr></thead><tbody></tbody></table></div>`;
+  animasiGrafik(p); $$('.peta circle', p).forEach(c => c.onclick = () => laci(c.dataset.nama));
   let kunci = 'n', arah = -1;
   const gambar = () => {
     const d = [...r.produk].sort((a, b) => (typeof a[kunci] === 'string' ? a[kunci].localeCompare(b[kunci]) : (a[kunci] ?? 0) - (b[kunci] ?? 0)) * arah);
@@ -273,7 +346,7 @@ function pindah(t) {
   S.tab = t;
   $$('#tab button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
   $$('.panel').forEach(p => p.hidden = p.id !== 'p-' + t);
-  if (t === 'ringkasan' || t === 'topik' || t === 'produk') { isiBatang($('#p-' + t)); isiDiver($('#p-' + t)); }
+  if (t === 'ringkasan' || t === 'topik' || t === 'produk') { isiBatang($('#p-' + t)); isiDiver($('#p-' + t)); animasiGrafik($('#p-' + t)); }
   window.scrollTo(0, 0);
 }
 $$('#tab button').forEach(b => b.onclick = () => { if (b.dataset.tab === 'ulasan' && !$('#u-daftar').children.length) { S.filter = {}; renderFilter(); muatUlasan(); } pindah(b.dataset.tab); });

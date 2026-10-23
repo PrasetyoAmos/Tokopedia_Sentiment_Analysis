@@ -36,6 +36,11 @@
     <p>Unggah ulasan Tokopedia. Hasilnya: produk ini disukai atau tidak, dan topik apa yang paling sering dipuji atau dikeluhkan.</p>
   </div>
   <form id="form" class="unggah" autocomplete="off">
+    <fieldset class="seg mode" aria-label="Sumber ulasan">
+      <label><input type="radio" name="mode" value="csv" checked><span>Unggah CSV</span></label>
+      <label><input type="radio" name="mode" value="web"><span>Ambil dari Tokopedia</span></label>
+    </fieldset>
+    <div id="mode-csv" class="stack">
     <label id="drop" class="drop" tabindex="0">
       <input type="file" id="file" name="file" accept=".csv,text/csv" hidden>
       <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 15v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg>
@@ -45,6 +50,16 @@
     <div id="contoh-wrap" class="contoh" hidden>
       <span class="kecil">Atau pakai data yang sudah ada di folder <code>data</code>:</span>
       <div id="contoh" class="contoh-daftar"></div>
+    </div>
+    </div>
+    <div id="mode-web" class="stack" hidden>
+      <label class="isian"><span>Link halaman ulasan produk</span>
+        <input type="url" id="url" placeholder="https://www.tokopedia.com/nama-toko/nama-produk/review"></label>
+      <div class="baris-isian">
+        <label class="isian kecil-i"><span>Jumlah halaman</span><input type="number" id="halaman" min="1" max="300" value="5"></label>
+        <label class="centang"><input type="checkbox" id="tampil" checked><span>Tampilkan jendela Chrome</span></label>
+      </div>
+      <p class="kecil">Chrome akan terbuka dan membaca ulasan halaman demi halaman (±5 detik per halaman). Biarkan jendelanya terbuka; bila muncul captcha, selesaikan manual. Butuh Google Chrome dan koneksi internet.</p>
     </div>
     <div class="opsi">
       {% if transformer %}

@@ -86,7 +86,7 @@ def _aspek_tabel(df):
     return t
 
 
-def _kata_dominan(df, k=14):
+def _kata_dominan(df, k=40):
     cnt = {l: Counter() for l in URUTAN}
     for teks, l in zip(df['Ulasan'], df['label']):
         for w in set(token(normalisasi(teks))):
@@ -128,6 +128,8 @@ def ringkas(df, min_produk=8, top_produk=60, dengan_kata=True):
             s = df[df.Rating == rt]
             m.append({'rating': rt, 'n': int(len(s)), 'Positif': int((s.label == 'Positif').sum()), 'Netral': int((s.label == 'Netral').sum()), 'Negatif': int((s.label == 'Negatif').sum())})
         r['matriks'] = m
+    bins = df.skor.clip(-4, 4).round().astype(int).value_counts()
+    r['hist'] = [dict(x=x, n=int(bins.get(x, 0))) for x in range(-4, 5)]
     if dengan_kata:
         r['kata'] = _kata_dominan(df)
     # produk
