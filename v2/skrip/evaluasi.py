@@ -12,7 +12,7 @@ from sentimen import buat_mesin
 
 ap = argparse.ArgumentParser()
 ap.add_argument('csv', nargs='+', help='satu atau beberapa file berlabel (digabung)'); ap.add_argument('--simpan', default=None, help='simpan prediksi per ulasan (untuk setel_gabungan.py)'); ap.add_argument('--mesin', choices=['aturan', 'transformer', 'gabungan', 'keduanya', 'semua'], default='aturan')
-ap.add_argument('--model', default=None); ap.add_argument('--bobot', type=float, default=0.45); ap.add_argument('--ambang', type=float, default=0.3); ap.add_argument('--percaya', type=float, default=None); ap.add_argument('--p-yakin', type=float, default=0.85); ap.add_argument('--tampilkan-salah', type=int, default=15)
+ap.add_argument('--model', default=None); ap.add_argument('--bobot', type=float, default=0.2); ap.add_argument('--ambang', type=float, default=0.45); ap.add_argument('--percaya', type=float, default=0.6); ap.add_argument('--p-yakin', type=float, default=0.9); ap.add_argument('--tampilkan-salah', type=int, default=15)
 a = ap.parse_args()
 
 d = pd.concat([pd.read_csv(f, encoding='utf-8-sig').assign(berkas=os.path.basename(f)) for f in a.csv], ignore_index=True)

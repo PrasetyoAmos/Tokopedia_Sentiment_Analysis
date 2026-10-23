@@ -63,5 +63,5 @@ Selector Tokopedia bisa berubah sewaktu-waktu; bila "Tidak ada ulasan terbaca", 
 `sentimen/mesin_gabungan.py`. IndoBERT peka terhadap keluhan, aturan bahasa teliti dan bisa menjelaskan alasannya; hasil keduanya digabung (lihat docstring untuk rumusnya).
 Teks lebih dulu dinormalkan oleh `sentimen/slang.py` (kamus slang, singkatan tanpa vokal seperti "mntp", salah ketik seperti "kwalitas").
 Bandingkan ketiga mesin: `python skrip\evaluasi.py data_contoh\sampel_uji_2.csv --mesin semua`.
-`--bobot` (bobot aturan, bawaan 0,45) dan `--ambang` (bawaan 0,3) belum disetel; atur setelah label diperiksa.
+Pengaturan bawaan (bobot aturan 0,2; ambang 0,45; percaya 0,6; p_yakin 0,9) dipilih lewat `skrip/setel_gabungan.py` (validasi silang, 211 ulasan berlabel oleh Claude): akurasi 0,919 vs 0,905 untuk aturan maupun IndoBERT. Selisih itu kecil; setel ulang setelah label Anda periksa.
 `sampel_uji_2.csv` (145 ulasan) belum pernah dipakai untuk menyetel aturan; `sampel_uji_awal.csv` dan `sampel_emas_awal.csv` sudah.

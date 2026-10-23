@@ -1,4 +1,5 @@
 """Mesin gabungan: IndoBERT + aturan bahasa.
+Pengaturan bawaan (bobot 0,2; ambang 0,45; percaya 0,6; p_yakin 0,9) dipilih dengan validasi silang pada 211 ulasan berlabel.
 
 Alasannya, kedua mesin salah di tempat berbeda (hasil uji di laptop):
 - IndoBERT peka terhadap keluhan (recall Negatif 1,00) tetapi lemah di Netral dan jarang menandai ulasan campuran.
@@ -17,7 +18,7 @@ from .normalisasi import normalisasi
 from .mesin_aturan import MesinAturan
 
 
-def gabung(r, p, w=0.45, ambang=0.3, percaya=None, p_yakin=0.85):
+def gabung(r, p, w=0.2, ambang=0.45, percaya=0.6, p_yakin=0.9):
     """r: hasil aturan (skor, positif, negatif, campuran). p: probabilitas IndoBERT {'Positif','Netral','Negatif'}.
     percaya: bila ada, kata sentimen berskor >= percaya diikuti kecuali IndoBERT berlawanan dengan peluang >= p_yakin."""
     sr = math.tanh(r['skor'] / 2)
@@ -39,7 +40,7 @@ def gabung(r, p, w=0.45, ambang=0.3, percaya=None, p_yakin=0.85):
 
 
 class MesinGabungan:
-    def __init__(self, transformer=None, aturan=None, bobot_aturan=0.45, ambang=0.3, percaya=None, p_yakin=0.85, **kw_transformer):
+    def __init__(self, transformer=None, aturan=None, bobot_aturan=0.2, ambang=0.45, percaya=0.6, p_yakin=0.9, **kw_transformer):
         if transformer is None:
             from .mesin_transformer import MesinTransformer
             transformer = MesinTransformer(**kw_transformer)
