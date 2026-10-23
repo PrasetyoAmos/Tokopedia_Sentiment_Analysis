@@ -18,7 +18,7 @@ class MesinTransformer:
         try:
             from transformers import pipeline
         except ImportError as e:
-            raise SystemExit('Pasang dulu: pip install transformers torch') from e
+            raise ImportError('Pasang dulu: pip install transformers torch') from e
         self.model = model
         self.peta = {**PETA_UMUM, **PETA_PER_MODEL.get(model, {}), **(peta or {})}
         self.batas = batas_token

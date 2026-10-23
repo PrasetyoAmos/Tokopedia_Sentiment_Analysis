@@ -217,7 +217,7 @@ function panelRingkasan() {
   const r = S.r, p = $('#p-ringkasan');
   p.innerHTML = `
   <div class="vonis"><h1>${esc(r.judul)}</h1><p class="sub">${esc(r.subjudul)}</p>
-    <p class="meta">${id(r.n)} ulasan dari ${id(r.n_produk)} produk &middot; dinilai dari kalimatnya, bukan bintang${r.duplikat ? ' &middot; ' + id(r.duplikat) + ' ulasan kembar dibuang' : ''} &middot; ${r.detik} detik &middot; ${esc(r.berkas)}</p></div>
+    <p class="meta">${id(r.n)} ulasan dari ${id(r.n_produk)} produk &middot; dinilai dari kalimatnya, bukan bintang${r.duplikat ? ' &middot; ' + id(r.duplikat) + ' ulasan kembar dibuang' : ''} &middot; mesin ${r.mesin === 'transformer' ? 'IndoBERT' : 'aturan bahasa'} &middot; ${r.detik} detik &middot; ${esc(r.berkas)}</p>${r.catatan ? `<p class="catatan">${esc(r.catatan)}</p>` : ''}</div>
   <div>${batang(r.pos_pct, r.net_pct, r.neg_pct)}
     <div class="legenda">
       <div class="p"><b data-hitung="${r.pos_pct}">0</b><span>positif &middot; ${id(r.pos)} ulasan</span></div>

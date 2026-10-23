@@ -51,7 +51,7 @@ python app.py
 Browser terbuka di http://127.0.0.1:5000. Pilih file CSV (atau salah satu file di folder `data/`), tekan **Analisis ulasan**.
 Kolom CSV: `Ulasan` (wajib), `Nama_Produk`, `Rating` (opsional; hanya untuk membandingkan bintang dengan isi kalimat).
 Tab: Ringkasan, Topik, Produk (klik baris untuk detail), Ulasan (dengan "Mengapa label ini?"), Validasi (akurasi dari label manual Anda).
-IndoBERT: `pip install torch transformers`, lalu `python app.py --transformer` dan pilih "IndoBERT" di halaman awal.
+IndoBERT dipakai otomatis bila `torch` dan `transformers` terpasang (`pip install torch transformers`); bila gagal dimuat, aplikasi kembali ke mesin aturan. Paksa mesin aturan dengan `python app.py --aturan`.
 CSV sendiri taruh di `v2/data/` agar muncul sebagai pilihan cepat.
 
 ## Ambil ulasan dari Tokopedia

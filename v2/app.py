@@ -14,6 +14,7 @@ app = Flask(__name__, template_folder='web/templates', static_folder='web/static
 app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024
 JOBS, HASIL, MESIN = {}, {}, {}
 TRANSFORMER_AKTIF = False
+DEFAULT_MESIN = 'aturan'
 LOCK = threading.Lock()
 
 
@@ -35,15 +36,21 @@ def _jalankan(jid, sumber, nama_berkas, nama_mesin, buang_dup, awal=0):
         df, n_dup = siapkan(df, buang_dup)
         if len(df) == 0: raise ValueError('Tidak ada ulasan yang bisa dianalisis.')
         cb(6, 'Menyiapkan mesin ' + ('IndoBERT (pertama kali agak lama)' if nama_mesin == 'transformer' else 'aturan'))
-        mesin = _mesin(nama_mesin)
+        try:
+            mesin = _mesin(nama_mesin)
+        except Exception as e:  # model belum terunduh / tidak ada internet / memori kurang
+            if nama_mesin != 'transformer': raise
+            j['catatan'] = 'IndoBERT tidak bisa dimuat, memakai mesin aturan. Penyebab: ' + str(e).splitlines()[0][:160]
+            nama_mesin = 'aturan'; mesin = _mesin('aturan')
         df = label_df(df, mesin, cb)
         cb(99, 'Menyusun ringkasan')
         r = ringkas(df)
         r.update(berkas=nama_berkas, mesin=nama_mesin, n_mentah=n_mentah, duplikat=n_dup, detik=round(time.time() - t0, 1))
         HASIL[jid] = dict(df=df, ringkasan=r, mesin=mesin)
         j.update(status='selesai', persen=100, pesan='Selesai')
-    except Exception as e:
-        j.update(status='gagal', pesan=str(e))
+        r['catatan'] = j.get('catatan', '')
+    except BaseException as e:  # termasuk SystemExit agar tugas tidak menggantung
+        j.update(status='gagal', pesan=str(e) or e.__class__.__name__)
 
 
 def _mulai(sumber, nama, mesin, dup):
@@ -86,7 +93,7 @@ def scrape():
 
 @app.get('/')
 def index():
-    return render_template('index.html', transformer=TRANSFORMER_AKTIF)
+    return render_template('index.html', transformer=TRANSFORMER_AKTIF, default=DEFAULT_MESIN)
 
 
 def _daftar_contoh():
@@ -207,11 +214,16 @@ def validasi(jid):
 
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
-    ap.add_argument('--transformer', action='store_true', help='aktifkan pilihan mesin IndoBERT')
+    ap.add_argument('--transformer', action='store_true', help='paksa tampilkan pilihan IndoBERT (otomatis bila torch+transformers terpasang)')
+    ap.add_argument('--aturan', action='store_true', help='pakai mesin aturan saja (tanpa IndoBERT)')
     ap.add_argument('--port', type=int, default=5000)
     ap.add_argument('--tanpa-browser', action='store_true')
     a = ap.parse_args()
-    TRANSFORMER_AKTIF = a.transformer
+    import importlib.util as iu
+    ada = all(iu.find_spec(m) for m in ('torch', 'transformers'))
+    TRANSFORMER_AKTIF = (ada or a.transformer) and not a.aturan
+    DEFAULT_MESIN = 'transformer' if TRANSFORMER_AKTIF else 'aturan'
+    print('  Mesin bawaan:', 'IndoBERT (torch + transformers terdeteksi)' if TRANSFORMER_AKTIF else 'aturan bahasa (pasang torch + transformers untuk IndoBERT)')
     if not a.tanpa_browser:
         threading.Timer(1.2, lambda: webbrowser.open(f'http://127.0.0.1:{a.port}')).start()
     print(f'\n  Buka http://127.0.0.1:{a.port}  (Ctrl+C untuk berhenti)\n')
