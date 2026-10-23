@@ -7,7 +7,7 @@ POSITIF = {
     'jelas': 1.0, 'ngefek': 1.0, 'efektif': 1.3, 'ampuh': 1.5, 'tajam': 0.3, 'jaya': 0.6, 'lumayan': 0.4,
     'bagus': 1.5, 'baik': 1.0, 'mantap': 2.0, 'jos': 1.5, 'keren': 1.8, 'puas': 2.0, 'memuaskan': 2.0, 'suka': 1.5,
     'senang': 1.5, 'recommended': 2.0, 'rekomendasi': 1.5, 'oke': 1.0, 'sesuai': 1.2, 'cocok': 1.2, 'pas': 1.0,
-    'cepat': 1.3, 'kilat': 1.8, 'aman': 1.2, 'rapi': 1.3, 'rapih': 1.3, 'awet': 1.5, 'original': 1.2, 'asli': 1.2,
+    'speechless': 1.5, 'cepat': 1.3, 'kilat': 1.8, 'aman': 1.2, 'rapi': 1.3, 'rapih': 1.3, 'awet': 1.5, 'original': 1.2, 'asli': 1.2,
     'murah': 1.3, 'worth': 1.8, 'sepadan': 1.5, 'nyaman': 1.5, 'halus': 1.2, 'lancar': 1.3, 'mulus': 1.5, 'tebal': 0.8,
     'ramah': 1.5, 'responsif': 1.5, 'fast': 1.3, 'respon': 0.3, 'terbaik': 2.0, 'sempurna': 2.0, 'luar biasa': 2.0,
     'cantik': 1.5, 'bersih': 1.2, 'wangi': 1.2, 'empuk': 1.2, 'kuat': 1.2, 'kokoh': 1.3, 'tangguh': 1.3, 'ngebut': 1.3,
@@ -24,13 +24,14 @@ NEGATIF = {
     'tipu': 2.4, 'penipu': 2.5, 'tertipu': 2.4, 'bohong': 2.0, 'nyesel': 2.2, 'menyesal': 2.2, 'parah': 2.0,
     'sampah': 2.5, 'ancur': 2.0, 'hancur': 2.0, 'bau': 1.3, 'kotor': 1.5, 'kecil': 0.6, 'kebesaran': 1.2, 'kekecilan': 1.2,
     'sempit': 1.0, 'longgar': 1.0, 'luntur': 1.5, 'kusut': 1.3, 'robek': 1.5, 'jebol': 1.6, 'rontok': 1.5,
-    'lama': 1.2, 'telat': 1.5, 'terlambat': 1.5, 'nyasar': 1.8, 'hilang': 1.8, 'salah': 1.6, 'keliru': 1.5,
+    'telat': 1.5, 'terlambat': 1.5, 'nyasar': 1.8, 'hilang': 1.8, 'salah': 1.6, 'keliru': 1.5,
     'kurang': 0.8, 'masalah': 1.2, 'kendala': 1.2, 'komplain': 1.5, 'protes': 1.3, 'ribet': 1.3, 'susah': 1.3, 'sulit': 1.2,
     'bohongan': 2.0, 'jutek': 1.6, 'judes': 1.6, 'cuek': 1.5, 'lalai': 1.6, 'ngaco': 1.8, 'payah': 2.0, 'bad': 1.8,
     'terrible': 2.2, 'worst': 2.4, 'disappointed': 2.0, 'kapok': 2.4, 'drop': 1.2, 'ngelag': 1.5, 'lag': 1.2,
     'macet': 1.4, 'blank': 1.4, 'bootloop': 2.0, 'cacatnya': 2.0, 'kotor': 1.5, 'berdebu': 1.0, 'jangan': 1.5,
 }
 FRASA_POS = {
+    'tahan lama': 1.6, 'awet tahan lama': 0.4,
     'tidak diragukan': 1.8, 'tidak pernah kecewa': 2.0, 'tidak ada kendala': 1.8,
     'sesuai deskripsi': 1.8, 'sesuai pesanan': 1.6, 'sesuai foto': 1.5, 'sesuai gambar': 1.5, 'sesuai ekspektasi': 1.6,
     'sesuai harga': 1.4, 'tidak mengecewakan': 2.0, 'tidak ada masalah': 1.8, 'tidak ada kendala': 1.8,
@@ -52,6 +53,9 @@ FRASA_NEG = {
     'stok lama': 1.5, 'tidak mulus': 1.6, 'tidak segel': 1.8, 'segel rusak': 1.8, 'segel terbuka': 1.8, 'tidak original': 2.0,
 }
 NEGASI = {'tidak', 'bukan', 'belum', 'tanpa', 'jangan', 'kurang'}
+HEDGE = {'agak', 'sedikit', 'dikit', 'lumayan'}
+KONTEKS_TUNGGU = {'kirim', 'dikirim', 'pengiriman', 'sampai', 'sampe', 'nunggu', 'menunggu', 'tunggu', 'proses', 'diproses', 'packing',
+                  'respon', 'balas', 'dibalas', 'datang', 'tiba', 'paket', 'kurir', 'ekspedisi', 'resi', 'antri', 'nungguin'}
 INTENSIF = {'banget', 'sekali', 'sangat', 'super', 'parah', 'amat', 'bener', 'benar', 'bangeet', 'pol'}
 NEGATIF_NETRAL = {'masalah', 'kendala', 'cacat', 'lecet', 'minus', 'kecewa', 'penyok', 'rusak', 'komplain'}  # "tidak ada X" => baik
 
@@ -91,7 +95,16 @@ class MesinAturan:
             t = toks[i]
             if t in terpakai and t not in NEGASI:
                 i += 1; continue
+            if t == 'lama':  # 'lama' buruk hanya untuk pengiriman/menunggu; bukan 'tahan lama', 'sudah lama', 'berapa lama'
+                sebelum = toks[i - 1] if i else ''
+                if sebelum not in ('tahan', 'awet', 'sudah', 'udah', 'berapa', 'sejak', 'cukup') and 'berapa' not in toks and KONTEKS_TUNGGU & set(toks):
+                    neg_lama = any(toks[j] in NEGASI for j in (i - 1, i - 2) if j >= 0)
+                    if neg_lama: s_pos += 0.8
+                    else: s_neg += 1.2 * (1.3 if (i + 1 < len(toks) and toks[i + 1] in INTENSIF) else 1)
+                i += 1; continue
             dasar = t[:-3] if t.endswith('nya') and len(t) > 5 and t not in POSITIF and t not in NEGATIF else t
+            if dasar not in POSITIF and dasar not in NEGATIF and len(dasar) > 3 and dasar[-1] == dasar[-2]:
+                dasar = dasar[:-1]  # 'baguss' -> 'bagus', 'mantapp' -> 'mantap'
             nilai = POSITIF.get(dasar) or 0
             nilai_n = NEGATIF.get(dasar) or 0
             if nilai or nilai_n:
@@ -102,9 +115,12 @@ class MesinAturan:
                     bobot *= 1.3
                 # negasi dalam 2 token sebelumnya
                 neg_sebelum = None
-                for j in (i - 1, i - 2):
-                    if j >= 0 and toks[j] in NEGASI:
+                for j in (i - 1, i - 2, i - 3):
+                    if j < 0: break
+                    if toks[j] in NEGASI:
                         neg_sebelum = toks[j]; break
+                    if j < i - 1 and toks[j] not in ('di', 'ke', 'yang', 'terlalu', 'begitu', 'dengan', 'ter'):
+                        break  # jarak 3 token hanya bila perantaranya kata sambung ('ga di packing rapi')
                 if neg_sebelum:
                     # "tidak ada masalah/kendala" => baik; "kurang bagus" => buruk; "tidak buruk" => cukup baik
                     if not pos and t in NEGATIF_NETRAL and neg_sebelum in ('tidak', 'tanpa', 'belum'):
@@ -117,6 +133,7 @@ class MesinAturan:
                     # 'kurang' sebagai kata negasi untuk kata berikutnya, bukan skor sendiri
                     if i + 1 < len(toks) and (toks[i + 1] in POSITIF):
                         i += 1; continue
+                if i > 0 and toks[i - 1] in HEDGE: bobot *= 0.5  # 'agak sempit' lebih ringan dari 'sempit'
                 if pos: s_pos += bobot
                 else: s_neg += bobot
             i += 1

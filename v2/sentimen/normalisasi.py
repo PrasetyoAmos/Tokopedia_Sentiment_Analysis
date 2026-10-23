@@ -1,6 +1,7 @@
 import re
 
 SLANG = {
+    'cakep': 'bagus', 'cakeup': 'bagus', 'cakepp': 'bagus',
     'gk': 'tidak', 'ga': 'tidak', 'gak': 'tidak', 'nggak': 'tidak', 'ngga': 'tidak', 'enggak': 'tidak', 'engga': 'tidak',
     'tdk': 'tidak', 'gx': 'tidak', 'tak': 'tidak', 'ndak': 'tidak', 'gada': 'tidak ada', 'gaada': 'tidak ada',
     'gabisa': 'tidak bisa', 'gbs': 'tidak bisa', 'blm': 'belum', 'udh': 'sudah', 'udah': 'sudah', 'sdh': 'sudah',
@@ -25,6 +26,7 @@ _KATA = re.compile(r"[a-z]+(?:-[a-z]+)?|\d+")
 def normalisasi(teks: str) -> str:
     t = str(teks).lower()
     t = _ULANG.sub(r'\1', t)
+    t = re.sub(r'\b(?:ga|gak|gk|nggak|tidak|tdk)\s+bisa\s+ber(?:word|kata)\S*(?:\s*-\s*kata)?', 'speechless', t)  # "ga bisa berkata-kata" = terpukau
     # pisahkan emoji dari kata agar tidak menempel
     t = re.sub(r'([^\w\s.,!?\-])', r' \1 ', t)
     out = []
