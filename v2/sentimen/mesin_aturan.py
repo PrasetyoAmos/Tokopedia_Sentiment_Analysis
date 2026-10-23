@@ -151,5 +151,8 @@ class MesinAturan:
         return Hasil(label=label, skor=round(skor, 2), positif=round(pos, 2), negatif=round(neg, 2),
                      campuran=campuran, klausa=detail)
 
+    def analisis_banyak(self, daftar):
+        return [self.analisis(t) for t in daftar]
+
     def prediksi(self, teks):
         return self.analisis(teks)['label']

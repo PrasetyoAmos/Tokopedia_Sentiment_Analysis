@@ -5,11 +5,13 @@ import argparse, os, re, sys, html
 from collections import Counter, defaultdict
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 import pandas as pd
-from sentimen import MesinAturan, analisis_aspek, ASPEK
+from sentimen import buat_mesin, analisis_aspek, ASPEK
 
 ap = argparse.ArgumentParser()
 ap.add_argument('csv'); ap.add_argument('--keluar', default='laporan.html'); ap.add_argument('--min-ulasan', type=int, default=15)
 ap.add_argument('--top', type=int, default=10)
+ap.add_argument('--mesin', choices=['aturan', 'transformer'], default='aturan')
+ap.add_argument('--model', default=None)
 a = ap.parse_args()
 
 d = pd.read_csv(a.csv, encoding='utf-8-sig')
@@ -20,9 +22,10 @@ d['kunci'] = d['Ulasan'].astype(str).str.strip().str.lower() + '|' + d['produk']
 d = d.drop_duplicates('kunci').reset_index(drop=True)
 n_dup = n_awal - len(d)
 
-m = MesinAturan()
-res = d['Ulasan'].astype(str).apply(m.analisis)
-d['label'] = res.apply(lambda r: r['label']); d['skor'] = res.apply(lambda r: r['skor']); d['campuran'] = res.apply(lambda r: r['campuran'])
+kw = {'model': a.model} if (a.mesin == 'transformer' and a.model) else {}
+m = buat_mesin(a.mesin, **kw)
+res = m.analisis_banyak(d['Ulasan'].astype(str).tolist())
+d['label'] = [r['label'] for r in res]; d['skor'] = [r['skor'] for r in res]; d['campuran'] = [r['campuran'] for r in res]
 d['aspek'] = d['Ulasan'].astype(str).apply(analisis_aspek)
 d['konflik'] = ((d.Rating >= 4) & (d.label == 'Negatif')) | ((d.Rating <= 2) & (d.label == 'Positif'))
 
@@ -88,7 +91,7 @@ for nama, g in baris:
 
 H.append(f'<h2>Pembanding dengan rating</h2><p>Rating rata-rata {tot["rating"]}. <b>{tot["konflik"]}</b> ulasan ({pct(tot["konflik"], tot["n"])}%) '
          'bernilai berlawanan dengan ratingnya (rating 4-5 tetapi teks negatif, atau rating 1-2 tetapi teks positif). Ulasan seperti ini biasanya menunjuk masalah yang tersembunyi di balik bintang.</p>')
-H.append('<p class="note">Catatan metode: mesin aturan berbasis kamus. Pada 84 ulasan uji berlabel awal (diberi label oleh Claude, belum diperiksa pemilik proyek): akurasi 81%, macro-F1 0,73. '
+H.append('<p class="note">Catatan metode: mesin '+a.mesin+'. Mesin aturan (berbasis kamus), pada 84 ulasan uji berlabel awal (diberi label oleh Claude, belum diperiksa pemilik proyek): akurasi 81%, macro-F1 0,73. '
          'Ketepatan pada data Anda perlu diperiksa dengan sampel berlabel sendiri (lihat README).</p></html>')
 open(a.keluar, 'w', encoding='utf-8').write('\n'.join(H))
 print('Ditulis:', a.keluar)
