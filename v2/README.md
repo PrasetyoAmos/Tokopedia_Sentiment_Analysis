@@ -40,3 +40,16 @@ Ulasan bercampur (16 dari 100) ditandai terpisah dan tidak dihitung dalam metrik
 1. Periksa dan koreksi label di `data_contoh/`, atau buat sampel sendiri 300 baris dengan `buat_sampel_emas.py`.
 2. Jalankan `--mesin keduanya` dan bandingkan hasilnya dengan mesin aturan.
 3. Rapikan penamaan produk (varian digabung) dan perbaiki scraper (lihat `v1/docs/SCRAPER_AUDIT.md`).
+
+## Menjalankan aplikasi web (lokal)
+
+```
+cd v2
+pip install -r requirements.txt
+python app.py
+```
+Browser terbuka di http://127.0.0.1:5000. Pilih file CSV (atau salah satu file di folder `data/`), tekan **Analisis ulasan**.
+Kolom CSV: `Ulasan` (wajib), `Nama_Produk`, `Rating` (opsional; hanya untuk membandingkan bintang dengan isi kalimat).
+Tab: Ringkasan, Topik, Produk (klik baris untuk detail), Ulasan (dengan "Mengapa label ini?"), Validasi (akurasi dari label manual Anda).
+IndoBERT: `pip install torch transformers`, lalu `python app.py --transformer` dan pilih "IndoBERT" di halaman awal.
+CSV sendiri taruh di `v2/data/` agar muncul sebagai pilihan cepat.

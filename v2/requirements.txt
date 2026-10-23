@@ -1,0 +1,6 @@
+flask>=3.0
+pandas>=2.0
+scikit-learn>=1.3
+# opsional, hanya untuk mesin IndoBERT (python app.py --transformer):
+# torch
+# transformers
