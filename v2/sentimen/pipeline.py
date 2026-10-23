@@ -145,8 +145,23 @@ def ringkas(df, min_produk=8, top_produk=60, dengan_kata=True):
     prod.sort(key=lambda x: -x['n'])
     r['produk'] = prod[:top_produk]
     r['n_produk'] = int(df.produk.nunique())
+    ur = [a['nama'] for a in r['aspek']]
+    r['heat_aspek'] = ur
+    big = df.produk.value_counts()
+    big = [x for x in big.index if big[x] >= min_produk][:12]
+    r['heat_produk'] = _heat(df, 'produk', big, lambda v: v, ur) if len(big) > 1 else []
+    r['heat_rating'] = _heat(df, 'Rating', [5, 4, 3, 2, 1], lambda v: f'Bintang {v}', ur) if r['ada_rating'] else []
     r['judul'], r['subjudul'] = _kalimat(r)
     return r
+
+
+def _heat(df, kunci, nilai, nama_fn, urut_aspek):
+    out = []
+    for v in nilai:
+        g = df[df[kunci] == v]
+        t = _aspek_tabel(g)
+        out.append(dict(nama=nama_fn(v), n=int(len(g)), sel=[dict(puji=t[a]['Positif'], keluh=t[a]['Negatif']) for a in urut_aspek]))
+    return out
 
 
 def _kalimat(r):

@@ -210,9 +210,13 @@ td .batang{width:160px}
 
 /* awan kata */
 .awan{width:100%;height:auto;display:block}
-.awan text{font-weight:800;letter-spacing:-.01em;cursor:pointer;transform-box:fill-box;transform-origin:center;animation:aw .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d)}
-.awan text:hover{opacity:.7;text-decoration:underline}
-@keyframes aw{from{opacity:0;transform:scale(.6)}}
+.awan text{font-weight:800;letter-spacing:-.01em;cursor:pointer;transform-box:fill-box;transform-origin:center;
+  animation:aw .9s cubic-bezier(.2,.9,.25,1.1) both var(--d), ap var(--t) ease-in-out infinite alternate calc(var(--d) + 1s);transition:opacity .2s}
+.awan:hover text{opacity:.28}.awan text:hover{opacity:1;text-decoration:underline;animation-play-state:running,paused}
+@keyframes aw{from{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.4) rotate(var(--rot));filter:blur(6px)}}
+@keyframes ap{from{transform:translate(0,0)}to{transform:translate(var(--bx),var(--by))}}
+.awan-kepala{display:flex;align-items:center;justify-content:space-between}
+.mini{border:1px solid var(--garis);background:none;border-radius:8px;padding:3px 10px;font-size:12px;font-weight:600;color:var(--ink2);cursor:pointer}.mini:hover{border-color:var(--ink3)}
 .awan-kotak{background:var(--muka);border:1px solid var(--garis);border-radius:14px;padding:14px}
 .awan-kotak h3{font-size:15px;font-weight:800;margin:2px 4px 6px;display:flex;align-items:center;gap:8px}
 .awan-kotak h3::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--c)}
@@ -240,3 +244,16 @@ details.daftar-kata[open] summary{margin-bottom:16px}
 .peta text{font-size:11.5px;fill:var(--ink3)}.peta line{stroke:var(--garis)}
 @media (max-width:860px){.grafik-dua{grid-template-columns:1fr}}
 @media print{.awan text{animation:none!important}}
+
+/* heatmap */
+.heat{display:grid;gap:3px;font-size:13px;overflow-x:auto;padding-bottom:4px}
+.heat .kh{font-size:12px;font-weight:600;color:var(--ink2);text-align:center;padding:4px 2px;align-self:end}
+.heat .bh{font-weight:600;padding:0 10px 0 0;display:flex;align-items:center;min-width:0}
+.heat .bh span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sel{height:40px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;opacity:0;transform:scale(.7);animation:sel .5s cubic-bezier(.2,.9,.25,1.1) forwards;animation-delay:var(--d);cursor:pointer;border:0;color:var(--ink);transition:outline-color .1s}
+.sel:hover,.sel:focus-visible{outline:2px solid var(--ink)}
+.sel.kosong{background:var(--net-l);color:var(--ink3);font-weight:400;cursor:default}
+@keyframes sel{to{opacity:1;transform:none}}
+.skala{display:flex;align-items:center;gap:10px;margin-top:12px;font-size:12.5px;color:var(--ink3)}
+.skala i{display:block;width:180px;height:10px;border-radius:5px;background:linear-gradient(90deg,var(--neg),var(--net-l) 50%,var(--pos))}
+@media (prefers-reduced-motion:reduce){.sel{opacity:1;transform:none}}

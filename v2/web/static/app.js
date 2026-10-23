@@ -147,7 +147,7 @@ function awan(arr, warna, filterLabel) {
       const x = W / 2 + r * 1.9 * Math.cos(a) - w / 2, y = H / 2 + r * Math.sin(a) - h / 2, b = { x, y, w, h };
       if (x < 2 || y < 2 || x + w > W - 2 || y + h > H - 2 || tabrak(b)) continue;
       kotak.push(b);
-      out += `<text x="${(x + w / 2).toFixed(1)}" y="${(y + h * .8).toFixed(1)}" font-size="${fs}" fill="${warna}" text-anchor="middle" data-cari="${esc(k.kata)}" data-label="${filterLabel}" style="--d:${(i * 28)}ms"><title>${esc(k.kata)}: ${id(k.jumlah)} ulasan</title>${esc(k.kata)}</text>`;
+      out += `<text x="${(x + w / 2).toFixed(1)}" y="${(y + h * .8).toFixed(1)}" font-size="${fs}" fill="${warna}" text-anchor="middle" data-cari="${esc(k.kata)}" data-label="${filterLabel}" style="--d:${i * 45}ms;--t:${(3.2 + (i * 37 % 20) / 10).toFixed(1)}s;--dx:${((i * 53 % 80) - 40)}px;--dy:${((i * 31 % 80) - 40)}px;--rot:${((i * 17 % 40) - 20)}deg;--bx:${((i * 7 % 7) - 3)}px;--by:${((i * 11 % 7) - 3)}px"><title>${esc(k.kata)}: ${id(k.jumlah)} ulasan</title>${esc(k.kata)}</text>`;
       break;
     }
   });
@@ -179,6 +179,23 @@ function peta(prod) {
   const dots = prod.map(p => `<circle cx="${X(p.neg)}" cy="${Y(p.n)}" r="0" data-r="${6 + Math.sqrt(p.n / my) * 8}" fill="${p.neg >= 20 ? 'var(--neg)' : p.pos >= 70 ? 'var(--pos)' : 'var(--net)'}" data-nama="${esc(p.nama)}"><title>${esc(p.nama)}&#10;${id(p.n)} ulasan · ${pct(p.pos)} positif · ${pct(p.neg)} negatif</title></circle>`).join('');
   return `<svg class="peta" viewBox="0 0 ${W} ${H}" role="img" aria-label="Peta produk">${grid}${xs}${dots}<text x="${L}" y="8">ulasan ↑</text><text x="${W}" y="${H - 2}" text-anchor="end">% ulasan negatif →</text></svg>`;
 }
+function heatmap(aspek, baris, klik) {
+  if (!baris.length) return '';
+  const warna = (p, k) => {
+    const t = p + k; if (!t) return null; const v = (p - k) / t, a = Math.min(1, .25 + Math.sqrt(t) / 9);
+    return v >= 0 ? `color-mix(in srgb, var(--pos) ${Math.round((.2 + .8 * v) * a * 100)}%, var(--net-l))` : `color-mix(in srgb, var(--neg) ${Math.round((.2 + .8 * -v) * a * 100)}%, var(--net-l))`;
+  };
+  let h = `<div class="heat" style="grid-template-columns:minmax(120px,210px) repeat(${aspek.length},minmax(64px,1fr))"><span></span>${aspek.map(a => `<span class="kh">${esc(a)}</span>`).join('')}`;
+  baris.forEach((b, i) => {
+    h += `<span class="bh" title="${esc(b.nama)}"><span>${esc(b.nama)}</span></span>`;
+    b.sel.forEach((c, j) => {
+      const w = warna(c.puji, c.keluh), d = (i + j) * 55;
+      h += w ? `<button class="sel" style="background:${w};--d:${d}ms" data-b="${esc(b.nama)}" data-a="${esc(aspek[j])}" title="${esc(b.nama)} · ${esc(aspek[j])}: ${c.puji} pujian, ${c.keluh} keluhan">${c.puji + c.keluh}</button>`
+               : `<span class="sel kosong" style="--d:${d}ms">–</span>`;
+    });
+  });
+  return h + `</div><div class="skala"><span>lebih banyak keluhan</span><i></i><span>lebih banyak pujian</span><span style="margin-left:auto">angka = jumlah sebutan</span></div>`;
+}
 function animasiGrafik(root) {
   const go = () => {
     $$('[data-dash]', root).forEach(c => c.setAttribute('stroke-dasharray', c.dataset.dash));
@@ -208,8 +225,8 @@ function panelRingkasan() {
       <div class="g"><b data-hitung="${r.neg_pct}">0</b><span>negatif &middot; ${id(r.neg)} ulasan</span></div>
     </div></div>
   <div><div class="kepala-bagian"><h2 class="judul">Yang paling sering dibicarakan</h2><p class="sub">Kata yang paling membedakan ulasan positif dari negatif; makin besar makin khas. Klik kata untuk membaca ulasannya.</p></div>
-    <div class="dua"><div class="awan-kotak" style="--c:var(--pos)"><h3>Dalam ulasan positif</h3>${awan(r.kata.Positif, 'var(--pos)', 'Positif')}</div>
-      <div class="awan-kotak" style="--c:var(--neg)"><h3>Dalam ulasan negatif</h3>${r.kata.Negatif.length ? awan(r.kata.Negatif, 'var(--neg)', 'Negatif') : '<p class="kecil" style="padding:20px">Belum ada kata keluhan yang cukup sering muncul.</p>'}</div></div>
+    <div class="dua"><div class="awan-kotak" style="--c:var(--pos)"><div class="awan-kepala"><h3>Dalam ulasan positif</h3><button class="mini" data-ulang>Putar ulang</button></div>${awan(r.kata.Positif, 'var(--pos)', 'Positif')}</div>
+      <div class="awan-kotak" style="--c:var(--neg)"><div class="awan-kepala"><h3>Dalam ulasan negatif</h3><button class="mini" data-ulang>Putar ulang</button></div>${r.kata.Negatif.length ? awan(r.kata.Negatif, 'var(--neg)', 'Negatif') : '<p class="kecil" style="padding:20px">Belum ada kata keluhan yang cukup sering muncul.</p>'}</div></div>
     <details class="daftar-kata" style="margin-top:18px"><summary>Lihat daftar dengan jumlahnya</summary><div class="dua">${daftarKata('Dalam ulasan positif', 'var(--pos)', r.kata.Positif.slice(0, 14), 'Positif')}${daftarKata('Dalam ulasan negatif', 'var(--neg)', r.kata.Negatif.slice(0, 14), 'Negatif')}</div></details></div>
   <div class="grafik-dua">
     <div class="kotak"><h3>Porsi topik</h3><p class="kecil">Seberapa sering tiap topik disebut</p>${donut(r.aspek)}</div>
@@ -221,15 +238,22 @@ function panelRingkasan() {
   isiBatang(p); animasiGrafik(p);
   $$('.kata .rel i', p).forEach(e => e.style.width = e.dataset.w + '%');
   $$('[data-cari]', p).forEach(a => a.onclick = () => bacaUlasan({ q: a.dataset.cari, label: a.dataset.label }));
+  $$('[data-ulang]', p).forEach(b => b.onclick = () => { const sv = $('.awan', b.closest('.awan-kotak')); const c = sv.cloneNode(true); sv.replaceWith(c); $$('[data-cari]', c).forEach(a => a.onclick = () => bacaUlasan({ q: a.dataset.cari, label: a.dataset.label })); });
   const k = $('[data-konflik]', p); if (k) k.onclick = () => bacaUlasan({ konflik: '1' });
 }
 function panelTopik() {
   const r = S.r;
   $('#p-topik').innerHTML = `<div class="kepala-bagian"><h2 class="judul">Topik yang dibicarakan</h2>
     <p class="sub">Setiap kalimat dicocokkan ke topik, lalu dinilai sendiri-sendiri. Satu ulasan bisa memuji kemasan sekaligus mengeluhkan pengiriman. Klik topik untuk membaca ulasannya.</p></div>${diverging(r.aspek, true)}
-    <p class="meta">Hanya kalimat yang jelas menyebut topik dan memuat nada positif atau negatif yang dihitung.</p>`;
+    <p class="meta">Hanya kalimat yang jelas menyebut topik dan memuat nada positif atau negatif yang dihitung.</p>
+    ${r.heat_produk.length ? `<div class="kotak"><h3>Topik di tiap produk</h3><p class="kecil">Warna hijau berarti topik itu lebih sering dipuji untuk produk tersebut, merah lebih sering dikeluhkan. Klik kotak untuk membaca ulasannya.</p><div style="margin-top:14px">${heatmap(r.heat_aspek, r.heat_produk)}</div></div>` : ''}
+    ${r.heat_rating.length ? `<div class="kotak"><h3>Topik menurut bintang</h3><p class="kecil">Apa yang dibicarakan pembeli di tiap tingkat bintang.</p><div style="margin-top:14px">${heatmap(r.heat_aspek, r.heat_rating)}</div></div>` : ''}`;
   isiDiver($('#p-topik'));
   $$('#p-topik .dv').forEach(b => b.onclick = () => bacaUlasan({ aspek: b.dataset.aspek }));
+  $$('#p-topik .sel[data-b]').forEach(b => b.onclick = () => {
+    const rt = /^Bintang (\d)$/.exec(b.dataset.b);
+    bacaUlasan(rt ? { rating: rt[1], aspek: b.dataset.a } : { produk: b.dataset.b, aspek: b.dataset.a });
+  });
 }
 function panelProduk() {
   const r = S.r, p = $('#p-produk');
