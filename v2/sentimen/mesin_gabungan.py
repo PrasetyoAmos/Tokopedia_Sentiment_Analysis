@@ -17,8 +17,29 @@ from .normalisasi import normalisasi
 from .mesin_aturan import MesinAturan
 
 
+def gabung(r, p, w=0.45, ambang=0.3, percaya=None, p_yakin=0.85):
+    """r: hasil aturan (skor, positif, negatif, campuran). p: probabilitas IndoBERT {'Positif','Netral','Negatif'}.
+    percaya: bila ada, kata sentimen berskor >= percaya diikuti kecuali IndoBERT berlawanan dengan peluang >= p_yakin."""
+    sr = math.tanh(r['skor'] / 2)
+    sb = p['Positif'] - p['Negatif']
+    ada_bukti = (r['positif'] + r['negatif']) >= 0.3
+    s = (w * sr + (1 - w) * sb) if ada_bukti else sb
+    if percaya is not None and ada_bukti and abs(r['skor']) >= percaya:
+        arah = 'Positif' if r['skor'] > 0 else 'Negatif'
+        lawan = p['Negatif'] if arah == 'Positif' else p['Positif']
+        label = arah if lawan < p_yakin else ('Positif' if s >= ambang else 'Negatif' if s <= -ambang else 'Netral')
+    elif not ada_bukti and p['Netral'] >= 0.55:
+        label = 'Netral'
+    elif s >= ambang: label = 'Positif'
+    elif s <= -ambang: label = 'Negatif'
+    else: label = 'Netral'
+    berlawanan = abs(sr) > 0.5 and abs(sb) > 0.5 and (sr > 0) != (sb > 0)
+    campuran = bool(r['campuran'] or (p['Positif'] > 0.3 and p['Negatif'] > 0.3) or berlawanan)
+    return label, s, campuran
+
+
 class MesinGabungan:
-    def __init__(self, transformer=None, aturan=None, bobot_aturan=0.45, ambang=0.3, **kw_transformer):
+    def __init__(self, transformer=None, aturan=None, bobot_aturan=0.45, ambang=0.3, percaya=None, p_yakin=0.85, **kw_transformer):
         if transformer is None:
             from .mesin_transformer import MesinTransformer
             transformer = MesinTransformer(**kw_transformer)
@@ -26,26 +47,17 @@ class MesinGabungan:
         self.aturan = aturan or MesinAturan()
         self.w = bobot_aturan
         self.ambang = ambang
+        self.percaya, self.p_yakin = percaya, p_yakin
 
     def _gabung(self, r, b):
-        sr = math.tanh(r['skor'] / 2)
-        p = b['prob']; sb = p['Positif'] - p['Negatif']
-        ada_bukti = (r['positif'] + r['negatif']) >= 0.3
-        s = (self.w * sr + (1 - self.w) * sb) if ada_bukti else sb
-        if not ada_bukti and p['Netral'] >= 0.55:
-            label = 'Netral'
-        elif s >= self.ambang: label = 'Positif'
-        elif s <= -self.ambang: label = 'Negatif'
-        else: label = 'Netral'
-        berlawanan = abs(sr) > 0.5 and abs(sb) > 0.5 and (sr > 0) != (sb > 0)
-        campuran = bool(r['campuran'] or (p['Positif'] > 0.3 and p['Negatif'] > 0.3) or berlawanan)
+        label, s, campuran = gabung(r, b['prob'], self.w, self.ambang, self.percaya, self.p_yakin)
         return dict(label=label, skor=round(s * 3, 2), positif=r['positif'], negatif=r['negatif'], campuran=campuran,
-                    klausa=r['klausa'], bert=p, skor_aturan=r['skor'])
+                    klausa=r['klausa'], bert=b['prob'], skor_aturan=r['skor'])
 
     def analisis_banyak(self, daftar):
         daftar = [str(t) for t in daftar]
         hr = [self.aturan.analisis(t) for t in daftar]
-        hb = self.transformer.analisis_banyak([normalisasi(t) or '-' for t in daftar])
+        hb = self.transformer.analisis_banyak(daftar)  # normalisasi slang dilakukan di dalam mesin transformer
         return [self._gabung(r, b) for r, b in zip(hr, hb)]
 
     def analisis(self, teks):

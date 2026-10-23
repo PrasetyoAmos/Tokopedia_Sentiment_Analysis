@@ -14,12 +14,13 @@ PETA_PER_MODEL = {
 
 
 class MesinTransformer:
-    def __init__(self, model=MODEL_BAWAAN, peta=None, batas_token=256, ukuran_batch=32, perangkat=None):
+    def __init__(self, model=MODEL_BAWAAN, peta=None, batas_token=256, ukuran_batch=32, perangkat=None, normalkan=True):
         try:
             from transformers import pipeline
         except ImportError as e:
             raise ImportError('Pasang dulu: pip install transformers torch') from e
         self.model = model
+        self.normalkan = normalkan  # slang/singkatan/salah ketik dibakukan dulu: 'mntappppp' -> 'mantap'
         self.peta = {**PETA_UMUM, **PETA_PER_MODEL.get(model, {}), **(peta or {})}
         self.batas = batas_token
         self.batch = ukuran_batch
@@ -38,6 +39,9 @@ class MesinTransformer:
         return t if t else '-'
 
     def analisis_banyak(self, daftar):
+        if self.normalkan:
+            from .normalisasi import normalisasi
+            daftar = [normalisasi(t) for t in daftar]
         teks = [self._bersih(t) for t in daftar]
         keluar = self._nlp(teks, batch_size=self.batch)
         hasil = []

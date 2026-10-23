@@ -11,11 +11,11 @@ from sklearn.metrics import classification_report, confusion_matrix, f1_score, a
 from sentimen import buat_mesin
 
 ap = argparse.ArgumentParser()
-ap.add_argument('csv'); ap.add_argument('--mesin', choices=['aturan', 'transformer', 'gabungan', 'keduanya', 'semua'], default='aturan')
-ap.add_argument('--model', default=None); ap.add_argument('--bobot', type=float, default=0.45); ap.add_argument('--ambang', type=float, default=0.3); ap.add_argument('--tampilkan-salah', type=int, default=15)
+ap.add_argument('csv', nargs='+', help='satu atau beberapa file berlabel (digabung)'); ap.add_argument('--simpan', default=None, help='simpan prediksi per ulasan (untuk setel_gabungan.py)'); ap.add_argument('--mesin', choices=['aturan', 'transformer', 'gabungan', 'keduanya', 'semua'], default='aturan')
+ap.add_argument('--model', default=None); ap.add_argument('--bobot', type=float, default=0.45); ap.add_argument('--ambang', type=float, default=0.3); ap.add_argument('--percaya', type=float, default=None); ap.add_argument('--p-yakin', type=float, default=0.85); ap.add_argument('--tampilkan-salah', type=int, default=15)
 a = ap.parse_args()
 
-d = pd.read_csv(a.csv, encoding='utf-8-sig')
+d = pd.concat([pd.read_csv(f, encoding='utf-8-sig').assign(berkas=os.path.basename(f)) for f in a.csv], ignore_index=True)
 d = d[d.label_manual.isin(['Positif', 'Negatif', 'Netral', 'Campuran'])].copy()
 urut = ['Positif', 'Negatif', 'Netral']
 daftar = {'keduanya': ['aturan', 'transformer'], 'semua': ['aturan', 'transformer', 'gabungan']}.get(a.mesin, [a.mesin])
@@ -24,12 +24,17 @@ cache = {}
 for nama in daftar:
     kw = {'model': a.model} if (nama in ('transformer', 'gabungan') and a.model) else {}
     if nama == 'gabungan':
-        kw.update(bobot_aturan=a.bobot, ambang=a.ambang)
+        kw.update(bobot_aturan=a.bobot, ambang=a.ambang, percaya=a.percaya, p_yakin=a.p_yakin)
         if 'transformer' in cache: kw['transformer'] = cache['transformer']  # pakai ulang model yang sudah dimuat
     m = buat_mesin(nama, **kw)
     if nama == 'transformer': cache['transformer'] = m
     hasil = m.analisis_banyak(d.Ulasan.astype(str).tolist())
     d['prediksi_' + nama] = [h['label'] for h in hasil]
+    if nama == 'aturan':
+        d['rule_skor'] = [h['skor'] for h in hasil]; d['rule_pos'] = [h['positif'] for h in hasil]
+        d['rule_neg'] = [h['negatif'] for h in hasil]; d['rule_camp'] = [bool(h['campuran']) for h in hasil]
+    if nama == 'transformer':
+        for k, c in (('Positif', 'b_pos'), ('Netral', 'b_net'), ('Negatif', 'b_neg')): d[c] = [h['prob'][k] for h in hasil]
     d['campuran_' + nama] = [h['campuran'] for h in hasil]
     tiga = d[d.label_manual != 'Campuran']
     y, p = tiga.label_manual, tiga['prediksi_' + nama]
@@ -48,3 +53,6 @@ for nama in daftar:
 print('\n===== Ringkasan =====')
 for k, (acc, f1) in ringkasan.items():
     print(f'{k:12s} akurasi={acc:.3f}  macro-F1={f1:.3f}')
+
+if a.simpan:
+    d.to_csv(a.simpan, index=False, encoding='utf-8-sig'); print('Prediksi disimpan ke', a.simpan)
